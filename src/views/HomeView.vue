@@ -1,18 +1,28 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
-  </div>
+	<div class="home">
+		<!-- <div>Big fat photo of tino as the background of the front page before reviewing</div> -->
+		<reviewPage />
+	</div>
+
+<!-- <router-link to="/about">Go to About Page</router-link> -->
+
+
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
+import reviewPage from '@/components/reviewPage.vue';
 
 export default defineComponent({
   name: 'HomeView',
   components: {
-    HelloWorld,
-  },
+    reviewPage
+  }
+
 });
 </script>
+
+<style>
+
+
+</style>
