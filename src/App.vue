@@ -1,7 +1,7 @@
 <template>
   <nav>
-    <router-link class="routerLinks" to="/">Home</router-link>
-    <router-link class="routerLinks" to="/resultsReveal">Results Reveal</router-link>
+    <!-- <router-link class="routerLinks" to="/">Home</router-link>
+    <router-link class="routerLinks" to="/resultsReveal">Results Reveal</router-link> -->
   </nav>
   <router-view/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">

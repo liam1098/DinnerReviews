@@ -3,26 +3,53 @@
 		<!-- <div>Big fat photo of tino as the background of the front page before reviewing</div> -->
 
 		<!-- Use the 'form-select' class to style the select dropdown with Bootstrap -->
+		<div class="spinning-image-container">
+			<img
+			:src="require('@/assets/tinoFlick.png')"
+			@click="playClickSound"
+			class="image-resizing spinning-animation"
+			alt="Didnt load"
+			>
+		</div>
+
+		<audio ref="clickAudio" :src="require('@/assets/moaningSound.mp3')" preload="auto"></audio>
+
 		<div class="form-group">
+
 			<label for="userSelect" class="col-form-label labels">You are:</label>
-			<div class="input-container">
+			<div class="input-container memberSelectionAndImage">
 				<select v-model="selectedMember" class="form-select inputs">
 					<option value="" disabled>Select a member</option>
 					<option v-for="member in members" :key="member.id" :value="member.name">
 						{{ member.name }}
 					</option>
 				</select>
+				<div v-if="selectedMember" class="image-container">
+					<img
+						:src="require(`@/assets/${imgName}.png`)"
+						alt="Didnt load"
+						class="miniImage"
+					>
+				</div>
+				
 			</div>
 		</div>
 		<div v-if="selectedMember" class="form-group">
 			<label for="revieweeSelect" class="col-form-label labels">Who hosted tonight?:</label>
-			<div class="input-container">
+			<div class="input-container memberSelectionAndImage">
 				<select v-model="selectedReviewee" class="form-select inputs">
 					<option value="" disabled>Select a member</option>
 					<option v-for="member in availableReviewees" :key="member.id" :value="member.name">
 						{{ member.name }}
 					</option>
 				</select>
+				<div v-if="selectedReviewee" class="image-container">
+					<img
+						:src="require(`@/assets/${imgNameReviewee}.png`)"
+						alt="Didnt load"
+						class="miniImage"
+					>
+				</div>
 			</div>
 		</div>
 
@@ -44,13 +71,18 @@
 		<button v-show="false" @click="tester"
 			class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
 		<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
-		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!areRatingsSatisfactory">Submit</button>
+		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!areRatingsSatisfactory && allowReviews">Submit</button>
+		<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
 
+		<!-- <button @click="testerFunction" class="btn btn-secondary mt-3">tester button</button> -->
+
+
+		<h3 v-if="!allowReviews" >Its illegal to try to make a review unless its a scheduled dinner day</h3>
 		<div class="adminSignInChecks" v-if="isTyler">
 			<button v-if="!isAdmin"  @click="googleSignIn"
-			class="btn btn-secondary mt-3 adminCheckField">Admin sign in</button>
+			class="btn btn-secondary mt-3 adminCheckField doesntWorkOnMobile">Admin sign in</button>
 
-			<input class="adminCheckField" v-model="passwordInput" type="password">
+			<input class="adminCheckField doesntWorkOnMobile" v-model="passwordInput" type="password">
 			
 
 			<div v-if="!isAdmin">
@@ -74,12 +106,16 @@ import { collection, onSnapshot, addDoc,
 		query, where, Timestamp, limit } from "firebase/firestore";
 import { db, auth, GoogleAuthProvider, signInWithPopup } from '@/firebase'
 
+
+
 // Firebase ref
 const membersCollectionRef = collection(db, 'members')
 const membersReviewRef = collection(db, 'ratings')
 const adminCollectionRef = collection(db, 'admins')
 
 const hostedDinnerRef = collection(db, 'hostedDinners')
+
+
 
 export default defineComponent ({
 	name: 'reviewPage',
@@ -107,7 +143,25 @@ export default defineComponent ({
 	// Bool value to determine if the user is currently allowed to add new reviews to the DB
     const allowReviews = ref<boolean>(false)
 
-    
+	const clickAudio = ref<HTMLAudioElement | null>(null);
+	const submitClick = ref<HTMLAudioElement | null>(null);
+    // Play the click sound
+    const playClickSound = () => {
+		if (clickAudio.value) {
+			clickAudio.value.play();
+		}
+    };
+
+	const playSubmitSound = () => {
+		if (submitClick.value) {
+			submitClick.value.play();
+		}
+	}
+	const testerFunction = () => {
+		console.log(selectedMember.value)
+	}
+
+	
 
     const hostedDinnerRefQuery = computed(() => {
         const today = new Date(); // Get the current date
@@ -118,6 +172,29 @@ export default defineComponent ({
         return query(hostedDinnerRef, where('date', '>=', Timestamp.fromDate(today)), where ('date', '<=', Timestamp.fromDate(tomorrow)),limit(1)); 
     });
 
+	const imgName = computed(() => {
+		if (selectedMember.value) {
+			let memberObject = members.value.find((member) => member.name == selectedMember.value)
+			if (memberObject) {
+				return memberObject.imgName
+			}
+			else {
+				return null
+			}
+		} else return null
+	})
+	const imgNameReviewee = computed(() => {
+		if (selectedReviewee.value) {
+			let memberObject = members.value.find((member) => member.name == selectedReviewee.value)
+			if (memberObject) {
+				return memberObject.imgName
+			}
+			else {
+				return null
+			}
+		} else return null
+	})
+
     const submitReview = () => {
 		addDoc(membersReviewRef, {
             name: selectedMember.value,
@@ -127,6 +204,8 @@ export default defineComponent ({
 			dessertRating: dessertVal.value,
 			date: new Date()
         })
+		playSubmitSound();
+
         selectedReviewee.value = ''
         entreeVal.value = 0
 		mainVal.value = 0
@@ -136,7 +215,7 @@ export default defineComponent ({
 
     const availableReviewees = computed(() => {
       // Filter the members array to exclude the selectedMember
-      return members.value.filter((member) => member.id !== selectedMember.value);
+      return members.value.filter((member) => member.name !== selectedMember.value);
     });
 
 
@@ -215,6 +294,8 @@ export default defineComponent ({
 		})
 	}
 
+	
+
 	// alternate to work on mobile devices
 
     onMounted(() => {
@@ -223,7 +304,8 @@ export default defineComponent ({
             querySnapshot.forEach((doc) => {
                 const member: Members = {
                     id: doc.id,
-                    name: doc.data().name
+                    name: doc.data().name,
+					imgName: doc.data().imgName
                 }
                 localMembers.push(member)
             })
@@ -291,7 +373,14 @@ export default defineComponent ({
 		isEntreeRatingSatisfactory,
 		isMainRatingSatisfactory,
 		isDessertRatingSatisfactory,
-		allowReviews
+		allowReviews,
+		playClickSound,
+		clickAudio,
+		imgName,
+		imgNameReviewee,
+		submitClick,
+		playSubmitSound,
+		testerFunction
 
 	}
 	}
@@ -313,6 +402,60 @@ ul {
   justify-content: center;
   align-items: center;
   margin: 50px auto;
+}
+.image-resizing {
+	max-height: 120px;
+	/* max-width: 100%; Ensure the image doesn't exceed its container */
+	display: block; /* Remove any extra space below the image */
+	margin: 0 auto; /* Center the image horizontally */
+	border-radius: 8px; /* Apply rounded corners to the image */
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+.spinning-image-container {
+	position: relative; /* Set the container to be positioned */
+	z-index: 2; /* Place the container above other elements */
+	animation: spin-in 1.5s ease-out forwards;
+}
+
+.spinning-animation {
+	animation: spin-in 1.5s ease-out forwards, wiggle 0.5s ease infinite;
+}
+
+@keyframes spin-in {
+  0% {
+    transform: rotate(-180deg) scale(8); /* Start larger */
+    opacity: .25;
+  }
+  100% {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.memberSelectionAndImage {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.image-container {
+	display: flex;
+	align-items: center; /* Align items vertically in the center */
+}
+
+.miniImage {
+	height: 80px;
+	width: auto;
+	display: block; /* Prevents extra space below the image */
+	margin: 0 auto; /* Center the image horizontally */
+	border-radius: 20px; /* Apply rounded corners to the image */
+	transform: translateY(-10px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+/* Apply the animation to the image */
+.spinning-animation {
+  animation: spin-in 1.5s ease-out forwards;
 }
 
 .form-group {
@@ -356,6 +499,25 @@ ul {
 	margin: 10px 0px;
 }
 
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+
 @media screen and (max-width: 767px) {
   .form-group {
     flex-direction: column; /* Stack labels and inputs on top of each other */
@@ -366,6 +528,9 @@ ul {
   }
   .input-container {
     width: 300px; /* Make inputs take full width on mobile */
+  }
+  .doesntWorkOnMobile {
+	display: none !important;
   }
 
 }

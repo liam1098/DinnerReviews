@@ -8,12 +8,12 @@
                             <div class="modal-header">
                                 <i @click="$emit('close-modal')" type="button" class="far fa-times-circle"></i>
                             </div>
-                            <!-- <div class="modal-body">
+                            <div class="modal-body">
                                 <slot />
-                            </div> -->
+                            </div>
                             <div class="modal-footer">
-                                <button @click="$emit('confirm', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
-                                <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <!-- <button @click="$emit('confirm', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
                             </div>
                         </div>
                     </transition>
@@ -23,7 +23,7 @@
     
 
 
-  </template>
+</template>
 
 <script lang="ts">
 export default {

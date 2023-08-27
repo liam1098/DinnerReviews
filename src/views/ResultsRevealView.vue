@@ -3,6 +3,7 @@
 		<!-- <div>Big fat photo of tino as the background of the front page before reviewing</div> -->
 		<div>Consider a component that show the results week by week with some fun aspects involved. Assume it is a fullscreen view too.</div>
         <div>Week by week and a button to go to the next page to show the next weeks results. Still able to </div>
+        <div>Mcleod staring at 18 year olds meme</div>
         <div v-for="hosts in hostedDinners" :key="hosts.id">
             <!-- <reviewCards @delete-review="deleteRating(review.id)" :review="review"/> -->
             <div class="container">

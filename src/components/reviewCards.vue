@@ -133,4 +133,8 @@ export default defineComponent ({
 .reviewInfo {
     margin-top: -30px;
 }
+
+.deleteButton:hover {
+    cursor: pointer;
+}
 </style>

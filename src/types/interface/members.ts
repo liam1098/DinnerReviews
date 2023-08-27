@@ -1,6 +1,7 @@
 interface Members {
     id: string,
-    name: string
+    name: string,
+    imgName: string
 }
 
 export default Members

@@ -1,4 +1,6 @@
 <template>
+    <router-link class="routerLinks" to="/">Home</router-link>
+
     <div class="firebaseTest">
         <div class="d-flex justify-content-end widthModifier">
             <div>
@@ -20,6 +22,34 @@
             @confirm="deleteRating">
             <div class="modal-configurable">
 
+            </div>
+        </FlexibleModal>
+
+        <!-- Modal devoted to inputting the date and cook for the next dinner. As well as the week number -->
+        <FlexibleModal :modalActive="scheduleActive" @close-modal="toggleScheduleModal" 
+        :buttonAction="scheduleButtonConfirm" :modalTitle="modalTitleSchedule"
+        >
+            <div class="modal-configurable">
+                <label for="userSelect" class="col-form-label labels">The chef will be:</label>
+                <div class="input-container memberSelectionAndImage">
+                    <select v-model="selectedMember" class="form-select inputs">
+                        <option value="" disabled>Select a member</option>
+                        <option v-for="member in members" :key="member.id" :value="member.name">
+                            {{ member.name }}
+                        </option>
+                    </select>
+                </div>
+                <label for="dateInput" class="col-form-label labels">Select a date:</label>
+                <div class="input-container">
+                    <input v-model="selectedDate" type="date" class="form-control inputs" id="dateInput">
+                </div>
+
+                <label for="weekNumberInput" class="col-form-label labels">Select a week number:</label>
+                <div class="input-container">
+                    <input v-model.number="selectedWeekNumber" type="number" class="form-control inputs" id="weekNumberInput">
+                </div>
+
+                <h3>need to write in the API call to add this doc. Also check to dos for converting dates to timestamps</h3>
             </div>
         </FlexibleModal>
 
@@ -52,6 +82,7 @@
                 
             </div>
         </div>
+        <button @click="toggleScheduleModal" class="btn btn-success">Schedule Next Dinner</button>
     </div>
 </template>
 
@@ -67,7 +98,7 @@ import { QuerySnapshot, collection,
     deleteDoc, doc, 
     orderBy, query, limit, where,
     serverTimestamp,
-Timestamp} from "firebase/firestore";
+    Timestamp } from "firebase/firestore";
 import { db } from '@/firebase'
 import reviewCards from "./reviewCards.vue";
 import FlexibleModal from "./FlexibleModal.vue";
@@ -90,12 +121,20 @@ export default defineComponent ({
     let reviews = ref<Reviews[]>([])
 
     const modalActive = ref<boolean>(false)
+    const scheduleActive = ref<boolean>(false)
 
     const nameInput = ref('')
     const modalTitle = 'Are you sure you want to delete this review?'
+    const modalTitleSchedule = 'Enter the dates and cook for the next dinner'
     const modalButtonAction = 'Confirm deletion'
+
+    const scheduleButtonConfirm = 'Confirm Dinner'
     const deleteReviewID = ref('')
-    
+
+    const selectedMember = ref<string | null>(null);
+
+    const selectedDate = ref('');
+    const selectedWeekNumber = ref<number | null>(null);
 
 
     const sortOptions = Object.values(SortOptions); // Use the imported enum here
@@ -169,6 +208,9 @@ export default defineComponent ({
             deleteReviewID.value = id
         }
     }
+    const toggleScheduleModal = () => {
+        scheduleActive.value = !scheduleActive.value;
+    }
 
     
     const isNewMemberFieldEmpty = computed<boolean>(() => {
@@ -189,29 +231,14 @@ export default defineComponent ({
             querySnapshot.forEach((doc) => {
                 const member: Members = {
                     id: doc.id,
-                    name: doc.data().name
+                    name: doc.data().name,
+                    imgName: doc.data().imgName
                 }
                 localMembers.push(member)
             })
             members.value = localMembers
         })
 
-        // onSnapshot(reviewCollectionQuery.value, (querySnapshot) => {
-        //     let localReviews: Reviews[] = []
-        //     querySnapshot.forEach((doc) => {
-        //         const review: Reviews = {
-        //             id: doc.id,
-        //             name: doc.data().name,
-        //             cook: doc.data().cook,
-        //             rating: doc.data().rating,
-        //             date: doc.data().date
-        //         }
-        //         // Convert the timestamp to something more helpful
-        //         // review.date = new Date(review.date.seconds*1000)
-        //         localReviews.push(review)
-        //     })
-        //     reviews.value = localReviews
-        // })
         fetchReviews();
 
     })
@@ -234,7 +261,14 @@ export default defineComponent ({
         modalTitle,
         toggleModal,
         modalButtonAction,
-        deleteReviewID
+        deleteReviewID,
+        scheduleActive,
+        toggleScheduleModal,
+        scheduleButtonConfirm,
+        modalTitleSchedule,
+        selectedMember,
+        selectedDate,
+        selectedWeekNumber
 
 	}
 	}
