@@ -58,10 +58,13 @@
 		<div v-if="selectedReviewee" class="form-group">
 			<label for="numberRating" class="col-form-label labels longer">What do you rate tonight? (1-10):</label>
 			<div class="input-container">
+				<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
 				<input v-model="entreeVal" type="number" class="form-control inputs" id="entreeVal" placeholder="Enter a number">
 				<div class="warning-message" v-if="!isEntreeRatingSatisfactory">Enter a valid number</div>
+				<label for="mainVal" class="col-form-label labels">Main rating:</label>
 				<input v-model="mainVal" type="number" class="form-control inputs" id="mainVal" placeholder="Enter a number">
 				<div class="warning-message" v-if="!isMainRatingSatisfactory">Enter a valid number</div>
+				<label for="dessertVal" class="col-form-label labels">Dessert rating:</label>
 				<input v-model="dessertVal" type="number" class="form-control inputs" id="dessertVal" placeholder="Enter a number">
 				<div class="warning-message" v-if="!isDessertRatingSatisfactory">Enter a valid number</div>
 
@@ -71,13 +74,13 @@
 		<button v-show="false" @click="tester"
 			class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
 		<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
-		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!areRatingsSatisfactory && allowReviews">Submit</button>
+		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
 		<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
 
 		<!-- <button @click="testerFunction" class="btn btn-secondary mt-3">tester button</button> -->
 
 
-		<h3 v-if="!allowReviews" >Its illegal to try to make a review unless its a scheduled dinner day</h3>
+		<h4 class="constraints" v-if="!allowReviews" >Its illegal to try to make a review unless its a scheduled dinner day</h4>
 		<div class="adminSignInChecks" v-if="isTyler">
 			<button v-if="!isAdmin"  @click="googleSignIn"
 			class="btn btn-secondary mt-3 adminCheckField doesntWorkOnMobile">Admin sign in</button>
@@ -92,6 +95,8 @@
 				</router-link>
 			</div>
 		</div>
+
+		<!-- <button @click="testerFunction">Tester</button> -->
 	</div>
 </template>
 
@@ -158,8 +163,19 @@ export default defineComponent ({
 		}
 	}
 	const testerFunction = () => {
-		console.log(selectedMember.value)
+		console.log('allow reviews: ', allowReviews.value)
+		console.log('are ratings satisfactory: ', areRatingsSatisfactory.value)
+		console.log('allowSubmit: ', allowSubmit.value)
 	}
+
+	// Logic is easier to follow even with these extra steps
+	const allowSubmit = computed(() => {
+		if (allowReviews.value == true && areRatingsSatisfactory.value == true) {
+			return true
+		} else {
+			return false
+		}
+	})
 
 	
 
@@ -202,7 +218,8 @@ export default defineComponent ({
 			entreeRating: entreeVal.value,
 			mainRating: mainVal.value,
 			dessertRating: dessertVal.value,
-			date: new Date()
+			date: new Date(),
+			weekNumber: hostedDinners.value[0].weekNumber
         })
 		playSubmitSound();
 
@@ -380,7 +397,8 @@ export default defineComponent ({
 		imgNameReviewee,
 		submitClick,
 		playSubmitSound,
-		testerFunction
+		testerFunction,
+		allowSubmit
 
 	}
 	}
@@ -402,6 +420,12 @@ ul {
   justify-content: center;
   align-items: center;
   margin: 50px auto;
+}
+
+.constraints {
+	max-width: 70%;
+	margin-top: 30px;
+	text-align: center;
 }
 .image-resizing {
 	max-height: 120px;

@@ -5,14 +5,13 @@
                     <!-- <div class="emptySpace"></div> -->
                     <i class="material-icons deleteButton" @click="deleteTask"  style="font-size:36px;color:red">delete</i>
                     <div class="reviewInfo">
-                        <div class="memberNames"><span :style="{'font-weight':'bolder'}">Reviewer: </span>{{review.name}}</div>
-                        <div class="memberNames"><span :style="{'font-weight':'bolder'}">Cook: </span>{{review.cook}}</div>
-                        <div class="memberNames" :style="{ color: entreeTextColour}"><span :style="{'font-weight':'bolder'}">Entree rating (X/10): </span>{{review.entreeRating}}</div>
-                        <div class="memberNames" :style="{ color: mainTextColour}"><span :style="{'font-weight':'bolder'}">Main (X/10): </span>{{review.mainRating}}</div>
-                        <div class="memberNames" :style="{ color: dessertTextColour}"><span :style="{'font-weight':'bolder'}">Dessert (X/10): </span>{{review.dessertRating}}</div>
-                        <div class="memberNames"><span :style="{'font-weight':'bolder'}">Date reviewed: </span>{{review.date}}</div>
-
-                        <div>Need to figure out a way to denote which week corresponds to which cook. i.e link week 1 to sam being cook etc</div>
+                        <div v-if="review.name" class="memberNames"><span :style="{'font-weight':'bolder'}">Reviewer: </span>{{review.name}}</div>
+                        <div v-if="review.cook" class="memberNames"><span :style="{'font-weight':'bolder'}">Cook: </span>{{review.cook}}</div>
+                        <div v-if="review.entreeRating" class="memberNames" :style="{ color: entreeTextColour}"><span :style="{'font-weight':'bolder'}">Entree rating (X/10): </span>{{review.entreeRating}}</div>
+                        <div v-if="review.mainRating" class="memberNames" :style="{ color: mainTextColour}"><span :style="{'font-weight':'bolder'}">Main (X/10): </span>{{review.mainRating}}</div>
+                        <div v-if="review.dessertRating" class="memberNames" :style="{ color: dessertTextColour}"><span :style="{'font-weight':'bolder'}">Dessert (X/10): </span>{{review.dessertRating}}</div>
+                        <div v-if="review.date" class="memberNames"><span :style="{'font-weight':'bolder'}">Date reviewed: </span>{{review.date.toLocaleString('en-AU')}}</div>
+                        <div v-if="review.weekNumber" class="memberNames"><span :style="{'font-weight':'bolder'}">Week Number: </span>{{review.weekNumber}}</div>
                     </div>
                     
                 </div> 

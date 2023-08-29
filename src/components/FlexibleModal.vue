@@ -12,8 +12,18 @@
                                 <slot />
                             </div>
                             <div class="modal-footer">
-                                <!-- <button @click="$emit('confirm', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
-                                <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
+
+                                <div v-if="isDelete" class="actionButtons">
+                                    <button @click="$emit('confirm', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                    <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+
+                                <div v-if="isScheduleNext" class="actionButtons">
+                                    <button :disabled="!allowSubmit" @click="$emit('confirm-new-dinner', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                    <button @click="$emit('close-modal-schedule')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+
+                                
                             </div>
                         </div>
                     </transition>
@@ -26,7 +36,9 @@
 </template>
 
 <script lang="ts">
-export default {
+import { defineComponent, computed} from "vue";
+
+export default defineComponent ({
     name: 'FlexibleModal',
 
     props: {
@@ -36,26 +48,32 @@ export default {
         },
         modalTitle: {
             type: String,
-            require: true
+            required: true
         },
         buttonAction: {
             type: String,
-            require: true
+            required: true
         },
         deleteReviewID: {
             type: String,
-            require: true
+            required: false
+        },
+        isDelete: Boolean,
+        isScheduleNext: Boolean,
+        allowSubmit: Boolean
+    },
+
+    setup(props) {
+        const testerFunction = () => {
+            console.log(props.isScheduleNext)
+        }
+
+        return {
+            testerFunction
         }
     },
 
-    // setup(context) {
-    //     // function closeModal() {
-    //     //     context.emit()
-    //     // }
-    // }
-    
-
-}
+})
 </script>
 
 <style scoped>
@@ -92,6 +110,11 @@ export default {
 
 .modal-body {
     text-align: start;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 10px;
 }
 
 .modal-dialog {

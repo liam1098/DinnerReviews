@@ -2,32 +2,33 @@
     <router-link class="routerLinks" to="/">Home</router-link>
 
     <div class="firebaseTest">
-        <div class="d-flex justify-content-end widthModifier">
-            <div>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ selectedOption }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li v-for="option in Object.values(sortOptions)" :key="option">
-                            <a class="dropdown-item" @click="selectOption(option)">{{ option }}</a>
-                        </li>
-                    </ul>
-                </div>
+        <div class="widthModifier top-buttons">
+            <button @click="toggleScheduleModal" class="btn btn-success">Schedule Next Dinner</button>
+
+           <div class="btn-group">
+                <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ selectedOption }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li v-for="option in Object.values(sortOptions)" :key="option">
+                        <a class="dropdown-item" @click="selectOption(option)">{{ option }}</a>
+                    </li>
+                </ul>
             </div>
         </div>
 
+        <h5 :style="{'margin-top':'20px'}">Upcoming schedule page or something maybe</h5>
+
         <FlexibleModal :modalActive="modalActive" @close-modal="toggleModal" :buttonAction="modalButtonAction" :modalTitle="modalTitle"
-            :deleteReviewID="deleteReviewID"
+            :deleteReviewID="deleteReviewID" :isDelete="isDelete"
             @confirm="deleteRating">
             <div class="modal-configurable">
-
             </div>
         </FlexibleModal>
 
         <!-- Modal devoted to inputting the date and cook for the next dinner. As well as the week number -->
-        <FlexibleModal :modalActive="scheduleActive" @close-modal="toggleScheduleModal" 
-        :buttonAction="scheduleButtonConfirm" :modalTitle="modalTitleSchedule"
+        <FlexibleModal :modalActive="scheduleActive" @close-modal-schedule="toggleScheduleModal" @confirm-new-dinner="confirmNextDinner"
+        :buttonAction="scheduleButtonConfirm" :modalTitle="modalTitleSchedule" :isScheduleNext="isScheduleNext" :allowSubmit="allowSubmit"
         >
             <div class="modal-configurable">
                 <label for="userSelect" class="col-form-label labels">The chef will be:</label>
@@ -39,17 +40,22 @@
                         </option>
                     </select>
                 </div>
-                <label for="dateInput" class="col-form-label labels">Select a date:</label>
-                <div class="input-container">
-                    <input v-model="selectedDate" type="date" class="form-control inputs" id="dateInput">
+
+                <div v-if="selectedMember" class="weekNumber">
+                    <label for="weekNumberInput" class="col-form-label labels">Select a week number:</label>
+                    <div class="input-container">
+                        <input v-model.number="selectedWeekNumber" type="number" class="form-control inputs" id="weekNumberInput">
+                    </div>
                 </div>
 
-                <label for="weekNumberInput" class="col-form-label labels">Select a week number:</label>
-                <div class="input-container">
-                    <input v-model.number="selectedWeekNumber" type="number" class="form-control inputs" id="weekNumberInput">
+                <div v-if="selectedWeekNumber" class="dateInput">
+                    <label for="dateInput" class="col-form-label labels">Select a date:</label>
+                    <div class="input-container">
+                        <input v-model="selectedDate" type="date" class="form-control inputs" id="dateInput">
+                    </div>
                 </div>
-
                 <h3>need to write in the API call to add this doc. Also check to dos for converting dates to timestamps</h3>
+                <div v-if="errorOccurred">Something probably went wrong with the date on this submission attempt</div>
             </div>
         </FlexibleModal>
 
@@ -58,31 +64,34 @@
             <reviewCards @delete-review="toggleModal(review.id)" :review="review"/>
         </div>
 
-        <div class="form">
-            <form @submit.prevent id="myForm">
-                <div class="form-group">
-                    <label for="name">Add a member:</label>
-                    <input v-model="nameInput" type="text" :style="{'max-width': '80%'}" class="form-control" id="name" name="name" required>
+        <div class="addDeleteMembersCard">
+            <div class="form">
+                <form @submit.prevent id="myForm">
+                    <div class="form-group">
+                        <label for="name">Add a member:</label>
+                        <input v-model="nameInput" type="text" :style="{'max-width': '80%'}" class="form-control" id="name" name="name" required>
+                    </div>
+                    <!-- add an are you sure as well as some sort of disabled check to prevent adding nothing -->
+                    <button @click="addMember()" type="submit" class="btn btn-primary"
+                    :disabled="isNewMemberFieldEmpty">
+                    Submit</button>
+                </form>
+            </div>
+            <div class="members">
+                <div v-for="member in members" :key="member.id">
+                    <div class="nameandbutton">
+                        <div class="emptySpace"></div>
+                        <div class="memberNames">{{member.name}}</div>
+                        <button @click="deleteMembers(member.id)" type="button" class="btn btn-danger">
+                            Delete
+                        </button>
+                    </div>
+                    
                 </div>
-                <!-- add an are you sure as well as some sort of disabled check to prevent adding nothing -->
-                <button @click="addMember()" type="submit" class="btn btn-primary"
-                :disabled="isNewMemberFieldEmpty">
-                Submit</button>
-            </form>
-        </div>
-        <div class="members">
-            <div v-for="member in members" :key="member.id">
-                <div class="nameandbutton">
-                    <div class="emptySpace"></div>
-                    <div class="memberNames">{{member.name}}</div>
-                    <button @click="deleteMembers(member.id)" type="button" class="btn btn-danger">
-                        Delete
-                    </button>
-                </div>
-                
             </div>
         </div>
-        <button @click="toggleScheduleModal" class="btn btn-success">Schedule Next Dinner</button>
+        
+        
     </div>
 </template>
 
@@ -105,6 +114,7 @@ import FlexibleModal from "./FlexibleModal.vue";
 // Firebase ref
 const membersCollectionRef = collection(db, 'members')
 const membersReviewRef = collection(db, 'ratings')
+const hostedDinnersRef = collection(db, 'hostedDinners')
 
 // Queries
 // let reviewCollectionQuery = query(membersReviewRef, orderBy('date', 'desc'), limit(6))
@@ -123,6 +133,8 @@ export default defineComponent ({
     const modalActive = ref<boolean>(false)
     const scheduleActive = ref<boolean>(false)
 
+    const isDelete = ref<boolean>(false)
+
     const nameInput = ref('')
     const modalTitle = 'Are you sure you want to delete this review?'
     const modalTitleSchedule = 'Enter the dates and cook for the next dinner'
@@ -132,9 +144,11 @@ export default defineComponent ({
     const deleteReviewID = ref('')
 
     const selectedMember = ref<string | null>(null);
-
-    const selectedDate = ref('');
+    
+    const selectedDate = ref<Date>()
     const selectedWeekNumber = ref<number | null>(null);
+
+    const errorOccurred = ref<boolean>(false)
 
 
     const sortOptions = Object.values(SortOptions); // Use the imported enum here
@@ -177,7 +191,8 @@ export default defineComponent ({
                 entreeRating: doc.data().entreeRating,
                 mainRating: doc.data().mainRating,
                 dessertRating: doc.data().dessertRating,
-                date: doc.data().date
+                date: doc.data().date.toDate(),
+                weekNumber: doc.data().weekNumber
                 };
                 localReviews.push(review);
             });
@@ -206,10 +221,25 @@ export default defineComponent ({
         modalActive.value = !modalActive.value;
         if (modalActive.value) {
             deleteReviewID.value = id
+            isDelete.value = true
+        } else {
+            isDelete.value = false
         }
     }
     const toggleScheduleModal = () => {
         scheduleActive.value = !scheduleActive.value;
+    }
+
+    const isScheduleNext = computed(() => {
+        if (scheduleActive.value) {
+            return true
+        } else {
+            return false
+        }
+    })
+
+    const testerFunction = () => {
+        console.log(isScheduleNext.value)
     }
 
     
@@ -222,9 +252,33 @@ export default defineComponent ({
     }
     });
 
-    
+    const allowSubmit = computed(() => {
+        if (selectedDate.value) {
+            return true
+        } else return false
+    })
 
-    
+    const  confirmNextDinner = async () => {
+        const toTimestamp = (dueDateString : Date) => {
+			const backToDate = new Date(dueDateString)
+			return Timestamp.fromDate(backToDate)
+		}
+
+        try {
+            addDoc(hostedDinnersRef, {
+            hostName: selectedMember.value,
+            weekNumber: selectedWeekNumber.value,
+            date: toTimestamp(selectedDate.value!)
+            })
+            toggleScheduleModal()
+
+        } catch (err) {
+            console.error('Something went wrong with the submission',err)
+        }
+
+        
+    }
+
     onMounted(() => {
         onSnapshot(membersCollectionRef, (querySnapshot) => {
             let localMembers: Members[] = []
@@ -268,7 +322,13 @@ export default defineComponent ({
         modalTitleSchedule,
         selectedMember,
         selectedDate,
-        selectedWeekNumber
+        selectedWeekNumber,
+        isDelete,
+        isScheduleNext,
+        testerFunction,
+        allowSubmit,
+        errorOccurred,
+        confirmNextDinner
 
 	}
 	}
@@ -289,6 +349,12 @@ export default defineComponent ({
 .widthModifier {
     max-width: 90%;
 }
+.top-buttons {
+    display: flex;
+    justify-content: space-between;
+    max-width: 85%;
+    margin: 0 auto;
+}
 
 
 .nameandbutton {
@@ -296,6 +362,21 @@ export default defineComponent ({
     justify-content: space-between;
     margin: 10px auto;
     max-width: 80%;
+}
+
+.addDeleteMembersCard {
+    max-width: 85%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 auto;
+    border: 1px solid rgb(197, 197, 197);
+    border-radius: 16px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px 10px;
+    margin-bottom: 20px;
 }
 
 

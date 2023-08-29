@@ -5,8 +5,8 @@ interface Reviews {
     entreeRating: number,
     mainRating: number,
     dessertRating: number,
-    date: Date
-
+    date: Date,
+    weekNumber: number
 }
 
 export default Reviews
