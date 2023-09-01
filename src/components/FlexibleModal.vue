@@ -6,6 +6,12 @@
                     <transition name="modal-animation-inner">
                         <div class="modal-content">
                             <div class="modal-header">
+                                <h4>{{ modalTitle }}</h4>
+                                <img v-if="modalActive"
+                                    :src="require(`@/assets/${imgName}.jpeg`)"
+                                    alt="Didnt load"
+                                    class="miniImage"
+                                >
                                 <i @click="$emit('close-modal')" type="button" class="far fa-times-circle"></i>
                             </div>
                             <div class="modal-body">
@@ -21,6 +27,11 @@
                                 <div v-if="isScheduleNext" class="actionButtons">
                                     <button :disabled="!allowSubmit" @click="$emit('confirm-new-dinner', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
                                     <button @click="$emit('close-modal-schedule')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+
+                                <div v-if="isReveal">
+                                    <button @click="$emit('mark-as-read', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                    <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                                 </div>
 
                                 
@@ -52,7 +63,7 @@ export default defineComponent ({
         },
         buttonAction: {
             type: String,
-            required: true
+            required: false
         },
         deleteReviewID: {
             type: String,
@@ -60,7 +71,9 @@ export default defineComponent ({
         },
         isDelete: Boolean,
         isScheduleNext: Boolean,
-        allowSubmit: Boolean
+        allowSubmit: Boolean,
+        isReveal: Boolean,
+        imgName: String
     },
 
     setup(props) {

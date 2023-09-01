@@ -26,7 +26,7 @@
 				</select>
 				<div v-if="selectedMember" class="image-container">
 					<img
-						:src="require(`@/assets/${imgName}.png`)"
+						:src="require(`@/assets/${imgName}.jpeg`)"
 						alt="Didnt load"
 						class="miniImage"
 					>
@@ -45,7 +45,7 @@
 				</select>
 				<div v-if="selectedReviewee" class="image-container">
 					<img
-						:src="require(`@/assets/${imgNameReviewee}.png`)"
+						:src="require(`@/assets/${imgNameReviewee}.jpeg`)"
 						alt="Didnt load"
 						class="miniImage"
 					>
@@ -58,14 +58,17 @@
 		<div v-if="selectedReviewee" class="form-group">
 			<label for="numberRating" class="col-form-label labels longer">What do you rate tonight? (1-10):</label>
 			<div class="input-container">
-				<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
-				<input v-model="entreeVal" type="number" class="form-control inputs" id="entreeVal" placeholder="Enter a number">
+				<div class="labelAndNumberInput">
+					<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
+					<input v-model="entreeVal" type="number" class="form-control inputs numberInputs" id="entreeVal" placeholder="Enter a number">
+				</div>
+				
 				<div class="warning-message" v-if="!isEntreeRatingSatisfactory">Enter a valid number</div>
 				<label for="mainVal" class="col-form-label labels">Main rating:</label>
-				<input v-model="mainVal" type="number" class="form-control inputs" id="mainVal" placeholder="Enter a number">
+				<input v-model="mainVal" type="number" class="form-control inputs numberInputs" id="mainVal" placeholder="Enter a number">
 				<div class="warning-message" v-if="!isMainRatingSatisfactory">Enter a valid number</div>
 				<label for="dessertVal" class="col-form-label labels">Dessert rating:</label>
-				<input v-model="dessertVal" type="number" class="form-control inputs" id="dessertVal" placeholder="Enter a number">
+				<input v-model="dessertVal" type="number" class="form-control inputs numberInputs" id="dessertVal" placeholder="Enter a number">
 				<div class="warning-message" v-if="!isDessertRatingSatisfactory">Enter a valid number</div>
 
 				<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no more than 2 DP's</div>
@@ -444,6 +447,18 @@ ul {
 .spinning-animation {
 	animation: spin-in 1.5s ease-out forwards, wiggle 0.5s ease infinite;
 }
+
+.numberInputs {
+	max-width: 20%;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.labelAndNumberInput {
+	display: flex;
+	justify-content: space-around;
+}
+
 
 @keyframes spin-in {
   0% {
