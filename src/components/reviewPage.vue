@@ -99,7 +99,7 @@
 			</div>
 		</div>
 
-		<!-- <button @click="testerFunction">Tester</button> -->
+		<!-- <button @click="testerFunction">Tester function</button> -->
 	</div>
 </template>
 
@@ -113,7 +113,7 @@ import HostedDinners from "@/types/interface/hostedDinners"
 import { collection, onSnapshot, addDoc,
 		query, where, Timestamp, limit } from "firebase/firestore";
 import { db, auth, GoogleAuthProvider, signInWithPopup } from '@/firebase'
-
+import { useToast, POSITION  } from "vue-toastification";
 
 
 // Firebase ref
@@ -153,6 +153,11 @@ export default defineComponent ({
 
 	const clickAudio = ref<HTMLAudioElement | null>(null);
 	const submitClick = ref<HTMLAudioElement | null>(null);
+
+	// Toasts
+	let toast = useToast();
+
+
     // Play the click sound
     const playClickSound = () => {
 		if (clickAudio.value) {
@@ -165,10 +170,21 @@ export default defineComponent ({
 			submitClick.value.play();
 		}
 	}
-	const testerFunction = () => {
-		console.log('allow reviews: ', allowReviews.value)
-		console.log('are ratings satisfactory: ', areRatingsSatisfactory.value)
-		console.log('allowSubmit: ', allowSubmit.value)
+	const successToast = () => {
+		toast.success("Review successfully added!", {
+			position: POSITION.TOP_CENTER,
+			timeout: 5000,
+			closeOnClick: true,
+			pauseOnFocusLoss: true,
+			pauseOnHover: true,
+			draggable: true,
+			draggablePercent: 0.5,
+			showCloseButtonOnHover: true,
+			hideProgressBar: true,
+			closeButton: "button",
+			icon: true,
+			rtl: false
+		});
 	}
 
 	// Logic is easier to follow even with these extra steps
@@ -225,6 +241,7 @@ export default defineComponent ({
 			weekNumber: hostedDinners.value[0].weekNumber
         })
 		playSubmitSound();
+		successToast();
 
         selectedReviewee.value = ''
         entreeVal.value = 0
@@ -291,6 +308,24 @@ export default defineComponent ({
 		console.log(mainVal.value, isMainRatingSatisfactory.value)
 		console.log(dessertVal.value, isDessertRatingSatisfactory.value)
 	})
+	const testerFunction = (() => {
+		toast.success("This is a tester function button", {
+			position: POSITION.TOP_CENTER,
+			timeout: 5000,
+			closeOnClick: true,
+			pauseOnFocusLoss: true,
+			pauseOnHover: true,
+			draggable: true,
+			draggablePercent: 0.5,
+			showCloseButtonOnHover: true,
+			hideProgressBar: true,
+			closeButton: "button",
+			icon: true,
+			rtl: false
+		});
+	})
+
+	
 	
 	const logTesting = (() => {
 		console.log(googleUser.value)
@@ -401,7 +436,8 @@ export default defineComponent ({
 		submitClick,
 		playSubmitSound,
 		testerFunction,
-		allowSubmit
+		allowSubmit,
+		toast
 
 	}
 	}

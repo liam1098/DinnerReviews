@@ -4,7 +4,8 @@ interface HostedDinners {
     hostID: string,
     hostName: string,
     weekNumber: number,
-    read: boolean
+    read: boolean,
+    isRead: boolean
 }
 
 export default HostedDinners

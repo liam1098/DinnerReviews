@@ -27,6 +27,7 @@ import Members from "@/types/interface/members"
 import Reviews from "@/types/interface/reviews"
 import { collection } from "firebase/firestore";
 import { db } from '@/firebase'
+
 // Firebase ref
 // const membersCollectionRef = collection(db, 'members')
 // const membersReviewRef = collection(db, 'ratings')

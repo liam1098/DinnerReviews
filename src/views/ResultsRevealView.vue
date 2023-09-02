@@ -5,40 +5,82 @@
         <div>Mcleod staring at 18 year olds meme</div>
         <div v-for="hosts in hostedDinnersReveal" :key="hosts.id">
             <!-- <reviewCards @delete-review="deleteRating(review.id)" :review="review"/> -->
-            <div @click="selectedDinner(hosts.id)" class="container">
+            <div @click="selectedDinner(hosts.id)" :class="{ 'container': true, 'read-card': hosts.isRead }">
                 <div class="generalStyling">Week Number: {{ hosts.weekNumber }}</div>
                 <div class="generalStyling">Host Name: {{ hosts.hostName }}</div>
-                <div class="generalStyling">Timestamp: {{ hosts.date.toLocaleString('en-AU') }}</div>
+                <div class="generalStyling">Date Hosted: {{ hosts.date.toLocaleDateString('en-AU') }}</div>
             </div>            
         </div>
 
-        <FlexibleModal :modalActive="modalActive" :modalTitle="modalTitle" :isReveal="isReveal" :buttonAction="buttonAction"
-        @close-modal="toggleRevealModal" :imgName="imgName"
+        <FlexibleModal :modalActive="modalActive" :modalTitle="modalTitle" :isReveal="isReveal" :buttonAction="buttonAction" :weekNumber="weekNumber" :dessertAck="dessertAck"
+        @close-modal="toggleRevealModal" :imgName="imgName" @mark-as-read="markWeekRead" 
         >
             <!-- <div v-for="review in spotlightReviews" :key="review.id" :value="review.weekNumber" >
                 <div>{{ review.cook }}</div>
                 <div>{{ review.mainRating }}</div>
             </div> -->
+            
             <div class="reveals">
-                <h3 class="minorNumber">This weeks average rating for entrees is: 
-                    <span :style="{ color: mainTextColour}">
-                        {{ averagedCourses?.entreeAvg.toFixed(1) }}
-                    </span>
-                </h3>
-                <h3 class="minorNumber">This weeks average rating for mains is: 
-                    <span :style="{ color: mainTextColour}">
-                        {{ averagedCourses?.mainAvg.toFixed(1) }}
-                    </span>
-                </h3>
-                <h3 class="minorNumber">This weeks average rating for desserts is: 
-                    <span :style="{ color: dessertTextColour}">
-                        {{ averagedCourses?.dessertAvg.toFixed(1) }}
-                    </span>
-                </h3>                
-                <h3 class="majorNumber">This weeks average rating after weighting is: {{ weeksAverage?.toFixed(1) }}</h3>
+                <transition name="fade">
+                    <div class="reveal">
+                        <h4 class="minorNumber">Entree average: 
+                        <span :style="{ color: mainTextColour}">
+                            {{ averagedCourses?.entreeAvg.toFixed(1) }}
+                        </span>
+                        </h4>
+                        <div class="checkbox">
+                            <input class="form-check-input" v-model="entreeAck" type="checkbox" value="" id="flexCheckDefault">
+                            <label class="form-check-label checkBox" for="flexCheckDefault">
+                                Acknowledge
+                            </label>
+                        </div>
+                    </div>
+                </transition>
+                
+                <transition name="fade">
+                    <div v-if="entreeAck" class="reveal">
+                        <h4 class="minorNumber">Main average: 
+                        <span :style="{ color: mainTextColour}">
+                            {{ averagedCourses?.mainAvg.toFixed(1) }}
+                        </span>
+                        </h4>
+                        <div class="checkbox">
+                            <input class="form-check-input" v-model="mainAck" type="checkbox" value="" id="flexCheckDefault">
+                            <label class="form-check-label checkBox" for="flexCheckDefault">
+                                Acknowledge
+                            </label>
+                        </div>
+                    </div>
+                </transition>
+
+                <Transition name="fade">
+                    <div v-if="mainAck" class="reveal">
+                        <h4 class="minorNumber">Dessert average: 
+                        <span :style="{ color: mainTextColour}">
+                            {{ averagedCourses?.dessertAvg.toFixed(1) }}
+                        </span>
+                        </h4>
+                        <div class="checkbox">
+                            <input class="form-check-input" v-model="dessertAck" type="checkbox" value="" id="flexCheckDefault">
+                            <label class="form-check-label checkBox" for="flexCheckDefault">
+                                Acknowledge
+                            </label>
+                        </div>
+                    </div>
+                </transition>
+
+                <div v-if="dessertAck" class="weightedReveal">
+                    <h2>Total Weighted Average: {{ weeksAverage.toFixed(1) }}</h2>
+                    
+                </div>
+
             </div>
 
         </FlexibleModal>
+
+        <div v-if="areAllRead" class="winnerReveal">
+            <h1>Someone probably won so thats cool</h1>
+        </div>
 
 	</div>
 
@@ -50,7 +92,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, computed } from 'vue';
 import { collection, onSnapshot,
-        query, limit, where, Timestamp, orderBy } from "firebase/firestore";
+        query, orderBy } from "firebase/firestore";
 import { db } from '@/firebase'
 
 import FlexibleModal from '@/components/FlexibleModal.vue';
@@ -88,6 +130,7 @@ export default defineComponent({
 
     const spotlightHosted = ref<HostedDinnersReveal>()
     const spotlightReviews = ref<Reviews[]>([])
+    const weekNumber = ref<number>()
     const weightingVals = ref<ReviewWeighting>()
 
     const modalActive = ref<boolean>(false)
@@ -107,6 +150,11 @@ export default defineComponent({
     const dessertTextColour = ref<string>()
     const imgName = ref<string>()
 
+    // Acknoweledgements
+    const entreeAck = ref<boolean>(false)
+    const mainAck = ref<boolean>(false)
+    const dessertAck = ref<boolean>(false)
+
     
 
     const hostedDinnerRefQuery = computed(() => {
@@ -115,6 +163,7 @@ export default defineComponent({
 
     const toggleRevealModal = () => {
         modalActive.value = !modalActive.value
+
     }
 
     const selectedDinner = (id : string) => {
@@ -125,6 +174,8 @@ export default defineComponent({
         modalTitle.value = `Highlights of week ${spotlightHosted.value?.weekNumber} hosted by ${spotlightHosted.value?.hostName}`
 
         spotlightReviews.value = reviews.value.filter((review) => review.weekNumber == spotlightHosted.value?.weekNumber)
+        // Setting the week number on the modal so it can pass it back up when marked as read is clicked
+        weekNumber.value = spotlightHosted.value?.weekNumber
 
         let averagedReviews: AveragedReviews[]  = averagingIndiviualReviews(spotlightReviews.value, weightingVals.value! as ReviewWeighting)
         weeksAverage.value = averagingAveraged(averagedReviews)
@@ -134,8 +185,23 @@ export default defineComponent({
         mainTextColour.value = mapRatingToColor(averagedCourses.value.mainAvg)
         dessertTextColour.value = mapRatingToColor(averagedCourses.value.dessertAvg)
 
-        imgName.value = members.value.find((member) => spotlightHosted.value?.hostName == member.name)?.imgName
+
+        try {
+            let correspondingMember = members.value.find((member) => spotlightHosted.value?.hostName == member.name)
+            if (correspondingMember?.imgName) {
+                imgName.value = correspondingMember.imgName
+            } else {
+                imgName.value = 'noImg'
+            }
+
+        } catch (err) {
+            console.log('Something went wrong with the image retrieval')
+        }
     }
+
+    const areAllRead = computed(() => {
+        return hostedDinnersReveal.value.every((host) => host.isRead);
+    })
 
     
     // const mainTextColour = computed<string>(() => {
@@ -158,6 +224,20 @@ export default defineComponent({
         }
     }
 
+    const markWeekRead = (weekNumber : number) => {
+        hostedDinnersReveal.value.forEach((dinner) => {
+        if (dinner.weekNumber === weekNumber) {
+            // Update the boolean variable (e.g., isRead) to the new value
+            dinner.isRead = true; // Replace with the desired new value
+            }
+        });
+
+        toggleRevealModal();
+        entreeAck.value = false
+        mainAck.value = false
+        dessertAck.value = false
+    }
+
 
 
     onMounted(() => {
@@ -170,7 +250,8 @@ export default defineComponent({
                     hostID: doc.data().hostID,
 					hostName: doc.data().hostName,
 					weekNumber: doc.data().weekNumber,
-                    read: false
+                    read: false,
+                    isRead: false
                 }
                 localHostedDinnersReveal.push(hostedDinner)
             })
@@ -240,7 +321,13 @@ export default defineComponent({
         entreeTextColour,
         mainTextColour,
         dessertTextColour,
-        imgName
+        imgName,
+        entreeAck,
+        mainAck,
+        dessertAck,
+        weekNumber,
+        markWeekRead,
+        areAllRead
     }
   }
 
@@ -252,9 +339,7 @@ export default defineComponent({
     margin: 10px 10px;
 }
 
-.minorNumber {
-    color: rgb(172, 172, 172);
-}
+
 
 .majorNumber {
     color: black;
@@ -269,10 +354,20 @@ export default defineComponent({
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
 }
 
+.read-card {
+  border: 1px solid green; /* Change this to your desired border style */
+}
+
 .container:hover {
     cursor: pointer;
     background-color: rgb(223, 223, 223);
     border: 1px solid rgb(40, 40, 40);
+}
+
+.minorNumber {
+    color: rgb(172, 172, 172);
+    text-align: left !important;
+    width: 250px;
 }
 
 .reveals {
@@ -282,4 +377,32 @@ export default defineComponent({
     gap: 10px;
 }
 
+/* Updated styling for .reveal */
+.reveal {
+    display: flex;
+    justify-content: space-around;
+    align-items: center; /* Align items vertically in each reveal */
+    gap: 10px; /* Add some spacing between h4 and checkbox/label */
+}
+
+/* Style for your checkboxes and labels */
+.checkbox {
+    display: flex;
+    align-items: center; /* Center checkbox and label vertically */
+    flex-wrap: nowrap; /* Ensure that the items stay on the same line */
+}
+
+/* Add some margin to labels for better spacing */
+.checkBox {
+    margin-left: 5px; /* Adjust as needed */
+}
+
+/* Transitions */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 2s;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
 </style>

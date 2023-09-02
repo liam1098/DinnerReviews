@@ -48,7 +48,7 @@ export function averageCourses<T>(reviews: Reviews[]): AveragedCourses {
     reviews.forEach((review) => {
         entreeTotal += review.entreeRating
         mainTotal += review.mainRating
-        dessertTotal += review.mainRating
+        dessertTotal += review.dessertRating
     })
 
     const averagedCourses: AveragedCourses = {

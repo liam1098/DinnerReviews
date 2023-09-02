@@ -25,12 +25,12 @@
                                 </div>
 
                                 <div v-if="isScheduleNext" class="actionButtons">
-                                    <button :disabled="!allowSubmit" @click="$emit('confirm-new-dinner', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                    <button :disabled="!allowSubmit" @click="$emit('confirm-new-dinner')"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
                                     <button @click="$emit('close-modal-schedule')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                                 </div>
 
-                                <div v-if="isReveal">
-                                    <button @click="$emit('mark-as-read', deleteReviewID)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
+                                <div v-if="isReveal" class="isRevealBtns">
+                                    <button :disabled="!dessertAck" @click="$emit('mark-as-read', weekNumber)"  type="button" class="btn btn-primary"> {{ buttonAction }} </button>
                                     <button @click="$emit('close-modal')" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                                 </div>
 
@@ -38,6 +38,7 @@
                             </div>
                         </div>
                     </transition>
+                    
                 </div>
         </div>
     </transition>
@@ -73,12 +74,14 @@ export default defineComponent ({
         isScheduleNext: Boolean,
         allowSubmit: Boolean,
         isReveal: Boolean,
-        imgName: String
+        imgName: String,
+        weekNumber: Number,
+        dessertAck: Boolean
     },
 
     setup(props) {
         const testerFunction = () => {
-            console.log(props.isScheduleNext)
+            console.log(props.weekNumber)
         }
 
         return {
@@ -141,6 +144,14 @@ i {
 i:hover {
     color: crimson;
     transition: ease-in-out .2s;
+}
+
+.isRevealBtns{
+    margin: 0 end;
+    display: flex;
+    justify-content: end;
+    gap: 10px;
+    margin-right: 10px;
 }
 
 .modal-animation-enter-active, .modal-animation-leave-active{
