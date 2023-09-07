@@ -1,15 +1,18 @@
 <template>
 	<div class="reviewPage">
-		<!-- <div>Big fat photo of tino as the background of the front page before reviewing</div> -->
+		<div class="signInDiv" :style="{'display': 'flex', 'justify-content': 'space-around', 'border': '1px solid black'}">
+			<button :style="{'max-height': '50px'}" v-if="!isAdmin" @click="googleSignIn"
+			class="btn btn-secondary mt-3 adminCheckField doesntWorkOnMobile">Sign-in
+			</button>
+			<div :style="{'max-width':'40%'}">ideally have this in the top right corner of the page when not sign in. Otherwise not visible.</div>
+		</div>
+		
 
 		<!-- Use the 'form-select' class to style the select dropdown with Bootstrap -->
+		<div>"Gee wouldn't wanna tap me in the face"</div>
 		<div class="spinning-image-container">
-			<img
-			:src="require('@/assets/tinoFlick.png')"
-			@click="playClickSound"
-			class="image-resizing spinning-animation"
-			alt="Didnt load"
-			>
+			<img :src="require('@/assets/tinoFlick.png')" @click="playClickSound" class="image-resizing spinning-animation"
+				alt="Didnt load">
 		</div>
 
 		<audio ref="clickAudio" :src="require('@/assets/moaningSound.mp3')" preload="auto"></audio>
@@ -20,18 +23,14 @@
 			<div class="input-container memberSelectionAndImage">
 				<select v-model="selectedMember" class="form-select inputs">
 					<option value="" disabled>Select a member</option>
-					<option v-for="member in members" :key="member.id" :value="member.name">
+					<option v-for="member in nonHostMembers" :key="member.id" :value="member.name">
 						{{ member.name }}
 					</option>
 				</select>
 				<div v-if="selectedMember" class="image-container">
-					<img
-						:src="require(`@/assets/${imgName}.jpeg`)"
-						alt="Didnt load"
-						class="miniImage"
-					>
+					<img :src="require(`@/assets/${imgName}.jpeg`)" alt="Didnt load" class="miniImage">
 				</div>
-				
+
 			</div>
 		</div>
 		<div v-if="selectedMember" class="form-group">
@@ -44,11 +43,7 @@
 					</option>
 				</select>
 				<div v-if="selectedReviewee" class="image-container">
-					<img
-						:src="require(`@/assets/${imgNameReviewee}.jpeg`)"
-						alt="Didnt load"
-						class="miniImage"
-					>
+					<img :src="require(`@/assets/${imgNameReviewee}.jpeg`)" alt="Didnt load" class="miniImage">
 				</div>
 			</div>
 		</div>
@@ -60,22 +55,25 @@
 			<div class="input-container">
 				<div class="labelAndNumberInput">
 					<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
-					<input v-model="entreeVal" type="number" class="form-control inputs numberInputs" id="entreeVal" placeholder="Enter a number">
+					<input v-model="entreeVal" type="number" class="form-control inputs numberInputs" id="entreeVal"
+						placeholder="Enter a number">
 				</div>
-				
+
 				<div class="warning-message" v-if="!isEntreeRatingSatisfactory">Enter a valid number</div>
 				<label for="mainVal" class="col-form-label labels">Main rating:</label>
-				<input v-model="mainVal" type="number" class="form-control inputs numberInputs" id="mainVal" placeholder="Enter a number">
+				<input v-model="mainVal" type="number" class="form-control inputs numberInputs" id="mainVal"
+					placeholder="Enter a number">
 				<div class="warning-message" v-if="!isMainRatingSatisfactory">Enter a valid number</div>
 				<label for="dessertVal" class="col-form-label labels">Dessert rating:</label>
-				<input v-model="dessertVal" type="number" class="form-control inputs numberInputs" id="dessertVal" placeholder="Enter a number">
+				<input v-model="dessertVal" type="number" class="form-control inputs numberInputs" id="dessertVal"
+					placeholder="Enter a number">
 				<div class="warning-message" v-if="!isDessertRatingSatisfactory">Enter a valid number</div>
 
-				<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no more than 2 DP's</div>
+				<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no
+					more than 2 DP's</div>
 			</div>
 		</div>
-		<button v-show="false" @click="tester"
-			class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
+		<button v-show="false" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
 		<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
 		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
 		<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
@@ -83,21 +81,16 @@
 		<!-- <button @click="testerFunction" class="btn btn-secondary mt-3">tester button</button> -->
 
 
-		<h4 class="constraints" v-if="!allowReviews" >Its illegal to try to make a review unless its a scheduled dinner day</h4>
-		<div class="adminSignInChecks" v-if="isTyler">
-			<button v-if="!isAdmin"  @click="googleSignIn"
-			class="btn btn-secondary mt-3 adminCheckField doesntWorkOnMobile">Admin sign in</button>
+		<div v-if="displayMsg">Hello: {{ helloPerson }}</div>
 
-			<input class="adminCheckField doesntWorkOnMobile" v-model="passwordInput" type="password">
-			
 
-			<div v-if="!isAdmin">
+		<h4 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">Its illegal to try to make a review unless
+			its a scheduled dinner day</h4>
+			<div v-if="isAdmin">
 				<router-link to="/admin">
-					<button
-					class="btn btn-success mt-3 adminCheckField">Go to admin page</button>
+					<button class="btn btn-success mt-3 adminCheckField">Go to admin page</button>
 				</router-link>
 			</div>
-		</div>
 
 		<!-- <button @click="testerFunction">Tester function</button> -->
 	</div>
@@ -132,6 +125,7 @@ export default defineComponent ({
 	},
 	setup() {
     const members = ref<Members[]>([])
+    const nonHostMembers = ref<Members[]>([])
 	const hostedDinners = ref<HostedDinners[]>([])
     const selectedMember = ref<string | null>(null); // Change the type to string | null
     const selectedReviewee = ref<string | null>(null);
@@ -150,9 +144,15 @@ export default defineComponent ({
 	let tempBool = ref<boolean>(false)
 	// Bool value to determine if the user is currently allowed to add new reviews to the DB
     const allowReviews = ref<boolean>(false)
+	const showH4 = ref(false);
+
 
 	const clickAudio = ref<HTMLAudioElement | null>(null);
 	const submitClick = ref<HTMLAudioElement | null>(null);
+
+	// Temporary div with the persons name to test auth again
+	const helloPerson = ref<string>('')
+	const displayMsg = ref<boolean>(false)
 
 	// Toasts
 	let toast = useToast();
@@ -251,8 +251,19 @@ export default defineComponent ({
     };
 
     const availableReviewees = computed(() => {
-      // Filter the members array to exclude the selectedMember
-      return members.value.filter((member) => member.name !== selectedMember.value);
+		// Filter the members array to exclude the selectedMember
+		// const filteredMembers = ref<Members[]>([])
+		if (hostedDinners.value[0]) {
+			return members.value
+			.filter((member) => member.name === hostedDinners.value[0].hostName)
+			.filter((member) => member.name !== selectedMember.value);
+		} else {
+			return members.value.filter((member) => member.name !== selectedMember.value);
+		}
+		
+
+		// return members.value.filter((member) => member.name !== selectedMember.value);
+		// return filteredMembers
     });
 
 
@@ -299,8 +310,8 @@ export default defineComponent ({
 
 	const isAdmin = computed<boolean>(() => {
 		// Some sort of simple password check here
-		return adminList.value.some(admin => admin.name === selectedMember.value && admin.password === passwordInput.value);
-
+		// return adminList.value.some(admin => admin.name === selectedMember.value && admin.password === passwordInput.value);
+		return adminList.value.some(admin => admin.name === googleUser.value)
 	})
 
 	const tester = (() => {
@@ -340,9 +351,18 @@ export default defineComponent ({
 			const user = result.user
 			googleUser.value = user.displayName
 			console.log('user:', googleUser)
+			if (googleUser.value) {
+				helloPerson.value = googleUser.value
+				displayMsg.value = true
+				console.log('isAdmin value: ',isAdmin.value)
+			} else {
+				helloPerson.value = ''
+				displayMsg.value = false
+			}
+
 		}).catch((error) => {
 			// Handle Errors here.
-			const errorCode = error.code;
+			const errorCode = error.code
 			const errorMessage = error.message;
 			console.error(errorCode)
 			console.error(errorMessage)
@@ -354,18 +374,6 @@ export default defineComponent ({
 	// alternate to work on mobile devices
 
     onMounted(() => {
-        onSnapshot(membersCollectionRef, (querySnapshot) => {
-            let localMembers: Members[] = []
-            querySnapshot.forEach((doc) => {
-                const member: Members = {
-                    id: doc.id,
-                    name: doc.data().name,
-					imgName: doc.data().imgName
-                }
-                localMembers.push(member)
-            })
-            members.value = localMembers
-        })
 
 		onSnapshot(hostedDinnerRefQuery.value, (querySnapshot) => {
             let localHostedDinners: HostedDinners[] = []
@@ -387,6 +395,25 @@ export default defineComponent ({
 			}
         })
 
+		onSnapshot(membersCollectionRef, (querySnapshot) => {
+            let localMembers: Members[] = []
+            querySnapshot.forEach((doc) => {
+                const member: Members = {
+                    id: doc.id,
+                    name: doc.data().name,
+					imgName: doc.data().imgName
+                }
+                localMembers.push(member)
+            })
+            members.value = localMembers
+			if (hostedDinners.value[0]) {
+				nonHostMembers.value = members.value.filter((member) => member.name !== hostedDinners.value[0].hostName)
+			} else {
+				nonHostMembers.value = members.value
+			}
+
+        })
+
 		onSnapshot(adminCollectionRef, (querySnapshot) => {
             let localAdmin: Admin[] = []
             querySnapshot.forEach((doc) => {
@@ -403,6 +430,9 @@ export default defineComponent ({
             })
             adminList.value = localAdmin
         })		
+		setTimeout(() => {
+			showH4.value = true;
+		}, 2000); 
 
     })
 
@@ -413,6 +443,7 @@ export default defineComponent ({
         selectedReviewee,
         submitReview,
         availableReviewees,
+		nonHostMembers,
         entreeVal,
 		mainVal,
 		dessertVal,
@@ -437,7 +468,11 @@ export default defineComponent ({
 		playSubmitSound,
 		testerFunction,
 		allowSubmit,
-		toast
+		toast,
+		showH4,
+		helloPerson,
+		displayMsg
+
 
 	}
 	}
@@ -465,6 +500,12 @@ ul {
 	max-width: 70%;
 	margin-top: 30px;
 	text-align: center;
+	opacity: 0;
+	transition: opacity 0.5s ease-in-out;
+}
+
+.show {
+  opacity: 1;
 }
 .image-resizing {
 	max-height: 120px;
@@ -490,10 +531,10 @@ ul {
 	text-align: center;
 }
 
-.labelAndNumberInput {
+/* .labelAndNumberInput {
 	display: flex;
 	justify-content: space-around;
-}
+} */
 
 
 @keyframes spin-in {
@@ -604,9 +645,10 @@ ul {
   .input-container {
     width: 300px; /* Make inputs take full width on mobile */
   }
+  /*
   .doesntWorkOnMobile {
 	display: none !important;
-  }
+  }  */
 
 }
 

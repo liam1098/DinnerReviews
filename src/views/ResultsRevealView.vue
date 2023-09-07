@@ -1,4 +1,8 @@
 <template>
+    <router-link class="routerLinks" to="/">Home</router-link>
+    <router-link class="routerLinks" to="/resultsReveal">Results Reveal</router-link>
+
+
 	<div class="resultsReveal">
 		<!-- <div>Big fat photo of tino as the background of the front page before reviewing</div> -->
 		<div>Consider a component that show the results week by week with some fun aspects involved. Assume it is a fullscreen view too.</div>
