@@ -1,4 +1,4 @@
-interface HostedDinners {
+interface HostedDinnersReveal {
     id: string,
     date: Date,
     hostID: string,
@@ -8,4 +8,4 @@ interface HostedDinners {
     isRead: boolean
 }
 
-export default HostedDinners
+export default HostedDinnersReveal

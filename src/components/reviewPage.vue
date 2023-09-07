@@ -73,7 +73,7 @@
 					more than 2 DP's</div>
 			</div>
 		</div>
-		<button v-show="false" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
+		<button v-show="true" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
 		<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
 		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
 		<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
@@ -93,6 +93,12 @@
 			</div>
 
 		<!-- <button @click="testerFunction">Tester function</button> -->
+
+		<div v-for="dinners in allHostedDinners" :key="dinners.id">
+			<div>Host: {{ dinners.hostName }}</div>
+			<div>Date: {{ dinners.date.toLocaleDateString() }}</div>
+			<div>Week number: {{ dinners.weekNumber }}</div>
+		</div>
 	</div>
 </template>
 
@@ -104,9 +110,10 @@ import Members from "@/types/interface/members"
 import Admin from "@/types/interface/admin"
 import HostedDinners from "@/types/interface/hostedDinners"
 import { collection, onSnapshot, addDoc,
-		query, where, Timestamp, limit } from "firebase/firestore";
+		query, where, Timestamp, limit, orderBy } from "firebase/firestore";
 import { db, auth, GoogleAuthProvider, signInWithPopup } from '@/firebase'
 import { useToast, POSITION  } from "vue-toastification";
+
 
 
 // Firebase ref
@@ -129,6 +136,8 @@ export default defineComponent ({
 	const hostedDinners = ref<HostedDinners[]>([])
     const selectedMember = ref<string | null>(null); // Change the type to string | null
     const selectedReviewee = ref<string | null>(null);
+
+	const allHostedDinners = ref<HostedDinners[]>([])
 	// Ratings
     const entreeVal = ref<number>(0)
     const mainVal = ref<number>(0)
@@ -170,8 +179,8 @@ export default defineComponent ({
 			submitClick.value.play();
 		}
 	}
-	const successToast = () => {
-		toast.success("Review successfully added!", {
+	const successToast = (message : string) => {
+		toast.success(message, {
 			position: POSITION.TOP_CENTER,
 			timeout: 5000,
 			closeOnClick: true,
@@ -206,6 +215,9 @@ export default defineComponent ({
         tomorrow.setHours(0, 0, 0, 0);
         return query(hostedDinnerRef, where('date', '>=', Timestamp.fromDate(today)), where ('date', '<=', Timestamp.fromDate(tomorrow)),limit(1)); 
     });
+    const allHostedDinnersRefQuery = computed(() => {
+        return query(hostedDinnerRef, orderBy("date")); 
+    });
 
 	const imgName = computed(() => {
 		if (selectedMember.value) {
@@ -231,6 +243,7 @@ export default defineComponent ({
 	})
 
     const submitReview = () => {
+		// firebase method to add a doc
 		addDoc(membersReviewRef, {
             name: selectedMember.value,
 			cook: selectedReviewee.value, 
@@ -241,7 +254,7 @@ export default defineComponent ({
 			weekNumber: hostedDinners.value[0].weekNumber
         })
 		playSubmitSound();
-		successToast();
+		successToast('Review successfully submitted');
 
         selectedReviewee.value = ''
         entreeVal.value = 0
@@ -251,7 +264,7 @@ export default defineComponent ({
     };
 
     const availableReviewees = computed(() => {
-		// Filter the members array to exclude the selectedMember
+		// Filter the members array to exclude the host. If no hosted dinner today then exlucde the selected member
 		// const filteredMembers = ref<Members[]>([])
 		if (hostedDinners.value[0]) {
 			return members.value
@@ -260,10 +273,7 @@ export default defineComponent ({
 		} else {
 			return members.value.filter((member) => member.name !== selectedMember.value);
 		}
-		
 
-		// return members.value.filter((member) => member.name !== selectedMember.value);
-		// return filteredMembers
     });
 
 
@@ -314,10 +324,9 @@ export default defineComponent ({
 		return adminList.value.some(admin => admin.name === googleUser.value)
 	})
 
+	// currently for testing toasts
 	const tester = (() => {
-		console.log(entreeVal.value, isEntreeRatingSatisfactory.value)
-		console.log(mainVal.value, isMainRatingSatisfactory.value)
-		console.log(dessertVal.value, isDessertRatingSatisfactory.value)
+		console.log('New hosted dinners all: ', allHostedDinners.value)
 	})
 	const testerFunction = (() => {
 		toast.success("This is a tester function button", {
@@ -355,6 +364,7 @@ export default defineComponent ({
 				helloPerson.value = googleUser.value
 				displayMsg.value = true
 				console.log('isAdmin value: ',isAdmin.value)
+				successToast('Sign in successful')
 			} else {
 				helloPerson.value = ''
 				displayMsg.value = false
@@ -374,16 +384,33 @@ export default defineComponent ({
 	// alternate to work on mobile devices
 
     onMounted(() => {
+		// Testing outsourcing hosted dinners API call to other files
+		// Will come back to this at a later time and date. The on snapshot functionality is more difficult to keep
+		// Saving new docs should be easily outsourced however
 
+		onSnapshot(allHostedDinnersRefQuery.value, (querySnapshot) => {
+            let localHostedDinners: HostedDinners[] = []
+            querySnapshot.forEach((doc) => {
+                const hostedDinner: HostedDinners = {
+                    id: doc.id,
+					date: doc.data().date.toDate(),
+					hostName: doc.data().hostName,
+					weekNumber: doc.data().weekNumber,
+					season: doc.data().season
+                }
+                localHostedDinners.push(hostedDinner)
+            })
+            allHostedDinners.value = localHostedDinners
+        })
 		onSnapshot(hostedDinnerRefQuery.value, (querySnapshot) => {
             let localHostedDinners: HostedDinners[] = []
             querySnapshot.forEach((doc) => {
                 const hostedDinner: HostedDinners = {
                     id: doc.id,
 					date: doc.data().date.toDate(),
-                    hostID: doc.data().hostID,
 					hostName: doc.data().hostName,
-					weekNumber: doc.data().weekNumber
+					weekNumber: doc.data().weekNumber,
+					season: doc.data().season
                 }
                 localHostedDinners.push(hostedDinner)
             })
@@ -471,7 +498,8 @@ export default defineComponent ({
 		toast,
 		showH4,
 		helloPerson,
-		displayMsg
+		displayMsg,
+		allHostedDinners
 
 
 	}

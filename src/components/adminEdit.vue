@@ -33,29 +33,36 @@
             <div class="modal-configurable">
                 <label for="userSelect" class="col-form-label labels">The chef will be:</label>
                 <div class="input-container memberSelectionAndImage">
-                    <select v-model="selectedMember" class="form-select inputs">
+                    <select v-model="selectedMember" class="form-select inputs photoInput">
                         <option value="" disabled>Select a member</option>
                         <option v-for="member in members" :key="member.id" :value="member.name">
                             {{ member.name }}
                         </option>
                     </select>
+                    <div v-if="selectedMember" class="image-container">
+                        <img :src="require(`@/assets/${imgName}.jpeg`)" alt="Didnt load" class="miniImage">
+                    </div>
+                </div>
+
+                <div class="col-form-label labels seasonDiv">
+                    Season: <span class="seasonStyling">{{ activeSeason }}</span>
                 </div>
 
                 <div v-if="selectedMember" class="weekNumber">
-                    <label for="weekNumberInput" class="col-form-label labels">Select a week number:</label>
-                    <div class="input-container">
-                        <input v-model.number="selectedWeekNumber" type="number" class="form-control inputs" id="weekNumberInput">
+                    <div class="input-container weekInput">
+                        <label for="weekNumberInput" class="col-form-label labels">Select a week number:</label>
+                        <input v-model.number="selectedWeekNumber" type="number" class="form-control numInputs" id="weekNumberInput">
                     </div>
                 </div>
 
                 <div v-if="selectedWeekNumber" class="dateInput">
                     <label for="dateInput" class="col-form-label labels">Select a date:</label>
-                    <div class="input-container">
+                    <div class="input-container dateInput">
                         <input v-model="selectedDate" type="date" class="form-control inputs" id="dateInput">
                     </div>
                 </div>
-                <h3>need to write in the API call to add this doc. Also check to dos for converting dates to timestamps</h3>
                 <div v-if="errorOccurred">Something probably went wrong with the date on this submission attempt</div>
+                <div v-if="showScheduleMsg">{{ scheduleMsg }}</div> 
             </div>
         </FlexibleModal>
 
@@ -111,17 +118,21 @@ import { QuerySnapshot, collection,
 import { db } from '@/firebase'
 import reviewCards from "./reviewCards.vue";
 import FlexibleModal from "./FlexibleModal.vue";
+import Season from "@/types/interface/season";
+import HostedDinnersReveal from "@/types/interface/hostedDinnersReveal";
+import HostedDinners from "@/types/interface/hostedDinners";
 // Firebase ref
 const membersCollectionRef = collection(db, 'members')
 const membersReviewRef = collection(db, 'ratings')
 const hostedDinnersRef = collection(db, 'hostedDinners')
+const seasonsRef = collection(db, 'seasons')
 
 // Queries
 // let reviewCollectionQuery = query(membersReviewRef, orderBy('date', 'desc'), limit(6))
 
 
 export default defineComponent ({
-	name: 'firebaseTest',
+	name: 'adminEdit',
 	components: {
         reviewCards,
         FlexibleModal
@@ -129,15 +140,19 @@ export default defineComponent ({
 	setup() {
     let members = ref<Members[]>([])
     let reviews = ref<Reviews[]>([])
+    let seasons = ref<Season[]>([])
+    let hostedDinners = ref<HostedDinners[]>([])
 
     const modalActive = ref<boolean>(false)
     const scheduleActive = ref<boolean>(false)
+    const showScheduleMsg = ref<boolean>(false)
+    const scheduleMsg = ref<string>('')
 
     const isDelete = ref<boolean>(false)
 
     const nameInput = ref('')
     const modalTitle = 'Are you sure you want to delete this review?'
-    const modalTitleSchedule = 'Enter the dates and cook for the next dinner'
+    const modalTitleSchedule = 'Enter the dates and chef for the next dinner'
     const modalButtonAction = 'Confirm deletion'
 
     const scheduleButtonConfirm = 'Confirm Dinner'
@@ -145,7 +160,7 @@ export default defineComponent ({
 
     const selectedMember = ref<string | null>(null);
     
-    const selectedDate = ref<Date>()
+    const selectedDate = ref<Date | null>()
     const selectedWeekNumber = ref<number | null>(null);
 
     const errorOccurred = ref<boolean>(false)
@@ -179,6 +194,27 @@ export default defineComponent ({
 
         }
     });
+    // Returns the imgName of the selected host as changes are made so its reactive
+    const imgName = computed(() => {
+		if (selectedMember.value) {
+			let memberObject = members.value.find((member) => member.name == selectedMember.value)
+			if (memberObject) {
+				return memberObject.imgName
+			}
+			else {
+				return null
+			}
+		} else return null
+	})
+    const activeSeason = computed(() => {
+        let active = seasons.value.find((season) => season.active == true)
+        if (active) {
+            return active.seasonNumber
+        } else {
+            return 0
+        }
+		
+	})
 
     const fetchReviews = () => {
         onSnapshot(reviewCollectionQuery.value, (querySnapshot) => {
@@ -199,6 +235,22 @@ export default defineComponent ({
             reviews.value = localReviews;
         });
     };
+    const fetchSeasons = () => {
+        onSnapshot(seasonsRef, (querySnapshot) => {
+            let localSeason: Season[] = [];
+            querySnapshot.forEach((doc) => {
+                const season: Season = {
+                id: doc.id,
+                seasonNumber: doc.data().seasonNumber,
+                active: doc.data().active
+                };
+                localSeason.push(season);
+            });
+            seasons.value = localSeason;
+        });
+    };
+
+    
 
     const addMember = () => {
         addDoc(membersCollectionRef, {
@@ -228,6 +280,14 @@ export default defineComponent ({
     }
     const toggleScheduleModal = () => {
         scheduleActive.value = !scheduleActive.value;
+        if (scheduleActive.value) {
+            fetchSeasons();
+        } else {
+            // should reset all of the inputs contained within this modal
+            selectedMember.value = null;
+            selectedDate.value = null
+            selectedWeekNumber.value = null;
+        }
     }
 
     const isScheduleNext = computed(() => {
@@ -258,23 +318,75 @@ export default defineComponent ({
         } else return false
     })
 
+    const crossCheckSchedule = (scheduleNext : HostedDinners) => {
+        console.log(scheduleNext)
+        // Make sure there arent any duplicate week numbers used mostly. Or incase someone has already had a host this season.
+        let duplicate = hostedDinners.value.find((dinner) => dinner.weekNumber == scheduleNext.weekNumber)
+        let hostDoubleUp = hostedDinners.value.find((dinner) => dinner.hostName == scheduleNext.hostName)
+        // if the variables above are undefined then there are no week duplicates or houst double ups
+        if (duplicate !== undefined) {
+            // This means that week has already been scheduled
+            return {
+                alreadyTaken: false,
+                message: `Week has alread been scheduled by ${duplicate?.hostName}`
+            } 
+        } else if (hostDoubleUp !== undefined){
+            return {
+                alreadyTaken: false,
+                message: `${hostDoubleUp?.hostName} has already had a turn this season `
+            } 
+        } else {
+            return {
+                alreadyTaken: true,
+                message: `This week is valid to schedule`
+            } 
+        }
+    }
+
     const  confirmNextDinner = async () => {
         const toTimestamp = (dueDateString : Date) => {
 			const backToDate = new Date(dueDateString)
 			return Timestamp.fromDate(backToDate)
 		}
-
-        try {
-            addDoc(hostedDinnersRef, {
-            hostName: selectedMember.value,
-            weekNumber: selectedWeekNumber.value,
-            date: toTimestamp(selectedDate.value!)
-            })
-            toggleScheduleModal()
-
-        } catch (err) {
-            console.error('Something went wrong with the submission',err)
+        let confirmationCheckStatus = {
+            alreadyTaken: true,
+            message: ''
         }
+        // Call function to cross check existing entries
+        if (selectedMember.value !== null && selectedWeekNumber.value !== null && selectedDate.value !== undefined && selectedDate.value !== null) {
+            let hostedObject : HostedDinners = {
+                id: '5',
+                hostName: selectedMember.value,
+                weekNumber: selectedWeekNumber.value,
+                date: selectedDate.value as Date,
+                season: activeSeason.value
+            }
+            confirmationCheckStatus = crossCheckSchedule(hostedObject)
+            console.log('confirmationCheckStatus:', confirmationCheckStatus)
+        } else {
+            console.log('Input have not been filled out properly')
+
+        }
+
+        
+        if (confirmationCheckStatus.alreadyTaken) {
+            try {
+                addDoc(hostedDinnersRef, {
+                hostName: selectedMember.value,
+                weekNumber: selectedWeekNumber.value,
+                date: toTimestamp(selectedDate.value!)
+                })
+                toggleScheduleModal()
+
+            } catch (err) {
+                console.error('Something went wrong with the submission',err)
+            }
+        } else {
+            console.log("Not able to schedule this dinner as this week was already taken")
+            showScheduleMsg.value = true
+            scheduleMsg.value = confirmationCheckStatus.message
+        }
+        
 
         
     }
@@ -292,6 +404,20 @@ export default defineComponent ({
             })
             members.value = localMembers
         })
+        onSnapshot(hostedDinnersRef, (querySnapshot) => {
+            let localHostedDinners: HostedDinners[] = []
+            querySnapshot.forEach((doc) => {
+                const hostedDinner: HostedDinners = {
+                    id: doc.id,
+					date: doc.data().date.toDate(),
+					hostName: doc.data().hostName,
+					weekNumber: doc.data().weekNumber,
+                    season: doc.data().season
+                }
+                localHostedDinners.push(hostedDinner)
+            })
+            hostedDinners.value = localHostedDinners
+        })
 
         fetchReviews();
 
@@ -302,6 +428,7 @@ export default defineComponent ({
 
 	return {
         members,
+        seasons,
         nameInput,
         addMember,
         deleteMembers,
@@ -328,7 +455,11 @@ export default defineComponent ({
         testerFunction,
         allowSubmit,
         errorOccurred,
-        confirmNextDinner
+        confirmNextDinner,
+        imgName,
+        activeSeason,
+        showScheduleMsg,
+        scheduleMsg
 
 	}
 	}
@@ -397,5 +528,45 @@ export default defineComponent ({
     padding: 10px 10px;
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+.photoInput{
+    max-width: 240px;
+}
+
+.miniImage {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.seasonDiv {
+    width: 240px;
+    display: flex;
+    justify-content: space-between;
+}
+.seasonStyling{
+    color: black;
+    border: 1px solid #dee2e6;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.weekInput {
+    max-width: 240px;
+    display: flex;
+    justify-content: flex-end; /* Move content to the right */
+    align-items: center; /* Center content vertically */
+}
+.numInputs {
+    width: 15%;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dateInput {
+    max-width: 240px;
 }
 </style>

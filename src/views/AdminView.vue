@@ -1,17 +1,17 @@
 <template>
   <div class="admin">
-    <firebaseTest />
+    <adminEdit />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import firebaseTest from '@/components/firebaseTest.vue';
+import adminEdit from '@/components/adminEdit.vue';
 
 export default defineComponent({
   name: 'AdminView',
   components: {
-    firebaseTest
+    adminEdit
   }
 
 });

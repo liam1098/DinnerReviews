@@ -7,12 +7,19 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h4>{{ modalTitle }}</h4>
-                                <img v-if="modalActive"
+                                <img v-if="modalActive && isReveal"
                                     :src="require(`@/assets/${imgName}.jpeg`)"
                                     alt="Didnt load"
                                     class="miniImage"
                                 >
-                                <i @click="$emit('close-modal')" type="button" class="far fa-times-circle"></i>
+                                <div v-if="isScheduleNext" class="actionButtons">
+                                    <i @click="$emit('close-modal-schedule')" type="button" class="far fa-times-circle"></i>
+                                </div>
+                                <div v-else>
+                                    <i @click="$emit('close-modal')" type="button" class="far fa-times-circle"></i>
+
+                                </div>
+                                
                             </div>
                             <div class="modal-body">
                                 <slot />

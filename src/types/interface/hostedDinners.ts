@@ -1,9 +1,9 @@
 interface HostedDinners {
     id: string,
     date: Date,
-    hostID: string,
     hostName: string,
-    weekNumber: number
+    weekNumber: number,
+    season: number
 }
 
 export default HostedDinners
