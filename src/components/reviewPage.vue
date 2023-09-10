@@ -17,66 +17,58 @@
 
 		<audio ref="clickAudio" :src="require('@/assets/moaningSound.mp3')" preload="auto"></audio>
 
-		<div class="form-group">
-
-			<label for="userSelect" class="col-form-label labels">You are:</label>
-			<div class="input-container memberSelectionAndImage">
-				<select v-model="selectedMember" class="form-select inputs">
-					<option value="" disabled>Select a member</option>
-					<option v-for="member in nonHostMembers" :key="member.id" :value="member.name">
-						{{ member.name }}
-					</option>
-				</select>
-				<div v-if="selectedMember" class="image-container">
-					<img :src="require(`@/assets/${imgName}.jpeg`)" alt="Didnt load" class="miniImage">
-				</div>
-
-			</div>
-		</div>
-		<div v-if="selectedMember" class="form-group">
-			<label for="revieweeSelect" class="col-form-label labels">Who hosted tonight?:</label>
-			<div class="input-container memberSelectionAndImage">
-				<select v-model="selectedReviewee" class="form-select inputs">
-					<option value="" disabled>Select a member</option>
-					<option v-for="member in availableReviewees" :key="member.id" :value="member.name">
-						{{ member.name }}
-					</option>
-				</select>
-				<div v-if="selectedReviewee" class="image-container">
-					<img :src="require(`@/assets/${imgNameReviewee}.jpeg`)" alt="Didnt load" class="miniImage">
+		<div v-if="allowReviews" class="reviewSection">
+			<div class="form-group">
+				<label for="userSelect" class="col-form-label labels">You are:</label>
+				<div class="input-container memberSelectionAndImage">
+					<select v-model="selectedMember" class="form-select inputs">
+						<option value="" disabled>Select a member</option>
+						<option v-for="member in nonHostMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
+					</select>
+					<div v-if="selectedMember" class="image-container">
+						<img :src="require(`@/assets/${imgName}.jpeg`)" alt="Didnt load" class="miniImage">
+					</div>
 				</div>
 			</div>
-		</div>
-
-		<!-- div here for warning people / telling them they cant vote again since they have already voted -->
-
-		<div v-if="selectedReviewee" class="form-group">
-			<label for="numberRating" class="col-form-label labels longer">What do you rate tonight? (1-10):</label>
-			<div class="input-container">
-				<div class="labelAndNumberInput">
-					<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
-					<input v-model="entreeVal" type="number" class="form-control inputs numberInputs" id="entreeVal"
-						placeholder="Enter a number">
+			<div v-if="selectedMember" class="form-group">
+				<label for="revieweeSelect" class="col-form-label labels">Who hosted tonight?:</label>
+				<div class="input-container memberSelectionAndImage">
+					<select v-model="selectedReviewee" class="form-select inputs">
+						<option value="" disabled>Select a member</option>
+						<option v-for="member in availableReviewees" :key="member.id" :value="member.name">{{ member.name }}</option>
+					</select>
+					<div v-if="selectedReviewee" class="image-container">
+						<img :src="require(`@/assets/${imgNameReviewee}.jpeg`)" alt="Didnt load" class="miniImage">
+					</div>
 				</div>
-
-				<div class="warning-message" v-if="!isEntreeRatingSatisfactory">Enter a valid number</div>
-				<label for="mainVal" class="col-form-label labels">Main rating:</label>
-				<input v-model="mainVal" type="number" class="form-control inputs numberInputs" id="mainVal"
-					placeholder="Enter a number">
-				<div class="warning-message" v-if="!isMainRatingSatisfactory">Enter a valid number</div>
-				<label for="dessertVal" class="col-form-label labels">Dessert rating:</label>
-				<input v-model="dessertVal" type="number" class="form-control inputs numberInputs" id="dessertVal"
-					placeholder="Enter a number">
-				<div class="warning-message" v-if="!isDessertRatingSatisfactory">Enter a valid number</div>
-
-				<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no
-					more than 2 DP's</div>
 			</div>
+
+			<!-- div here for warning people / telling them they cant vote again since they have already voted -->
+
+			<div v-if="selectedReviewee" class="form-group">
+				<label for="numberRating" class="col-form-label labels longer">What do you rate tonight? (1-10):</label>
+				<div class="input-container">
+					<div class="labelAndNumberInput">
+						<label for="entreeVal" class="col-form-label labels">Entree rating:</label>
+						<input v-model="entreeVal" type="number" class="form-control inputs numberInputs" id="entreeVal" placeholder="Enter a number">
+					</div>
+					<div class="warning-message" v-if="!isEntreeRatingSatisfactory">Enter a valid number</div>
+					<label for="mainVal" class="col-form-label labels">Main rating:</label>
+					<input v-model="mainVal" type="number" class="form-control inputs numberInputs" id="mainVal" placeholder="Enter a number">
+					<div class="warning-message" v-if="!isMainRatingSatisfactory">Enter a valid number</div>
+					<label for="dessertVal" class="col-form-label labels">Dessert rating:</label>
+					<input v-model="dessertVal" type="number" class="form-control inputs numberInputs" id="dessertVal" placeholder="Enter a number">
+					<div class="warning-message" v-if="!isDessertRatingSatisfactory">Enter a valid number</div>
+					<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no more than 2 DP's</div>
+				</div>
+			</div>
+			<button v-show="true" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
+			<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
+			<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
+			<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
 		</div>
-		<button v-show="true" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
-		<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
-		<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
-		<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
+
+		
 
 		<!-- <button @click="testerFunction" class="btn btn-secondary mt-3">tester button</button> -->
 
@@ -84,20 +76,36 @@
 		<div v-if="displayMsg">Hello: {{ helloPerson }}</div>
 
 
-		<h4 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">Its illegal to try to make a review unless
-			its a scheduled dinner day</h4>
-			<div v-if="isAdmin">
-				<router-link to="/admin">
-					<button class="btn btn-success mt-3 adminCheckField">Go to admin page</button>
-				</router-link>
-			</div>
+		
+		<div v-if="isAdmin">
+			<router-link to="/admin">
+				<button class="btn btn-success mt-3 adminCheckField">Go to admin page</button>
+			</router-link>
+		</div>
+		<router-link to="/storePage">
+				<button class="btn btn-success mt-3 adminCheckField">Go to store page</button>
+		</router-link>
 
 		<!-- <button @click="testerFunction">Tester function</button> -->
-
+		<h4 class="constraints" :class="{ 'show': showH4 }" :style="{'color':'red'}" v-if="!allowReviews">Today isnt a dinner day</h4>
+		<h5 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">The details for the next upcoming dinner is:</h5>
 		<div v-for="dinners in allHostedDinners" :key="dinners.id">
-			<div>Host: {{ dinners.hostName }}</div>
-			<div>Date: {{ dinners.date.toLocaleDateString() }}</div>
-			<div>Week number: {{ dinners.weekNumber }}</div>
+			<div class="upcomingDinnerCard">
+				<div class="info">
+					<span class="label">Host:</span>
+					<span class="data">{{ dinners.hostName }}</span>
+				</div>
+				<div class="info">
+					<span class="label">Date:</span>
+					<span class="data">{{ dinners.date.toLocaleDateString() }}</span>
+				</div>
+				<div class="info">
+					<span class="label">Week number:</span>
+					<span class="data">{{ dinners.weekNumber }}</span>
+				</div>
+			</div>
+				
+
 		</div>
 	</div>
 </template>
@@ -114,6 +122,7 @@ import { collection, onSnapshot, addDoc,
 import { db, auth, GoogleAuthProvider, signInWithPopup } from '@/firebase'
 import { useToast, POSITION  } from "vue-toastification";
 
+import { useStore } from "vuex";
 
 
 // Firebase ref
@@ -165,6 +174,9 @@ export default defineComponent ({
 
 	// Toasts
 	let toast = useToast();
+
+	// Store
+	const store = useStore()
 
 
     // Play the click sound
@@ -441,6 +453,8 @@ export default defineComponent ({
 
         })
 
+		console.log('Printing out the details saved to the store here: ', store.state.user.name)
+
 		onSnapshot(adminCollectionRef, (querySnapshot) => {
             let localAdmin: Admin[] = []
             querySnapshot.forEach((doc) => {
@@ -642,6 +656,77 @@ ul {
 .adminCheckField {
 	margin: 10px 0px;
 }
+
+/* .upcomingDinnerCard {
+	display: flex;
+    flex-direction: column;
+    border: 2px solid rgb(197, 197, 197);
+    border-radius: 12px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(to bottom, #f5f5f5, #eaeaea);
+	transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.upcomingDinnerCard:hover {
+    background-color: #ffe6e6;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
+} */
+
+.upcomingDinnerCard {
+    /* Background color with a subtle gradient */
+    background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+    /* Soft border color */
+    border: 2px solid rgb(219, 219, 219);
+    border-radius: 12px;
+	min-width: 240px;
+    /* Padding and margin adjustments for mobile devices */
+    padding: 15px 10px; /* Smaller padding for mobile */
+    margin: 10px 0; /* Reduced margin for mobile */
+    /* Text styles */
+    color: #333; /* Dark gray text color */
+    /* font-family: "Arial", sans-serif; */
+	font-weight: 400;
+    font-size: 20px; /* Smaller font size for mobile */
+    /* Box shadow for subtle depth */
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+    /* Transition for hover effect */
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Align labels at the start (left) */
+    padding: 5px 0;
+	
+}
+
+.label {
+    font-weight: bold;
+    color: #888;
+    width: 30%; /* Adjust label width as needed */
+	text-align: start;
+}
+
+.data {
+    width: 70%; /* Adjust data width as needed */
+    text-align: right; /* Right-align the reference data */
+}
+
+
+
+.upcomingDinnerCard:hover {
+    background-color: #f0f0f0; /* Lighter background on hover */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+
 
 @keyframes wiggle {
   0% {

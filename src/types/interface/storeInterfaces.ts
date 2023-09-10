@@ -1,0 +1,12 @@
+
+interface UserState {
+    name: string | null;
+    email: string | null;
+}
+
+interface RootState {
+    user: UserState; // You can add other modules here as well
+}
+  
+
+export { RootState, UserState }

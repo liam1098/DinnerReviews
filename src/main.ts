@@ -8,10 +8,12 @@ import '@fortawesome/fontawesome-free/css/all.css';
 
 import Toast, { PluginOptions } from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import { store } from './store';
 
 const app = createApp(App);
 
 app.use(router);
+app.use(store)
 app.use(Toast, {
     transition: "Vue-Toastification__slideBlurred",
     maxToasts: 1,

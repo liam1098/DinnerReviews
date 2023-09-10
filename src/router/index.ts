@@ -18,6 +18,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/resultsReveal',
     name: 'resultsReveal',
     component: () => import('../views/ResultsRevealView.vue')
+  },
+  {
+    path: '/storePage',
+    name: 'storePage',
+    component: () => import('../views/storeView.vue')
   }
 ]
 
