@@ -1,10 +1,33 @@
 <template>
-  <nav>
-    <!-- <router-link class="routerLinks" to="/">Home</router-link> -->
-  </nav>
-  <router-view/>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<AppHeader />
+
+	<!-- <router-view v-slot="{ Component }">
+		<transition name="route" mode="out-in">
+			<component  :is="Component"/>
+		</transition>
+	</router-view> -->
+
+	<RouterView />
+	
+
+
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </template>
+
+<script lang="ts">
+import AppHeader from '@/components/layout/header.vue'
+
+export default {
+  components: {
+    AppHeader, // Register the header component
+  },
+
+};
+
+
+</script>
+
 
 <style>
 #app {
@@ -44,4 +67,26 @@ main {
 .routerLinks {
   margin: 10px 10px;
 }
+
+/* Route transitions */
+/* Update the CSS class prefix to match the 'name' attribute */
+.route-enter-from {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.route-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.route-leave-to {
+  opacity: 0;
+  transform: translateX(-100px);
+}
+
+.route-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+
 </style>

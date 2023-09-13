@@ -1,6 +1,6 @@
 <template>
     <!-- All the HTML/subcomponents you need to display your list -->
-    <router-link class="routerLinks" to="/">Home</router-link>
+
     <div>hello there</div>
     <button @click="googleSignIn">sign in to google</button>
     <button
@@ -29,7 +29,6 @@ const onScreenMessage = ref('')
 const saveUserInfo = (userInformation : UserState) => {
     // Update store
     store.commit('user/SET_USER_INFO', userInformation);
-
     console.log('Printing out the details saved to the store here: ', store.state.user.name)
 }
 
@@ -47,7 +46,8 @@ const googleSignIn = async () => {
             console.log('Sign in has worked')
             const userInfo : UserState = {
                 name: userName.value,
-                email: userEmail.value
+                email: userEmail.value,
+                isAdmin: false
             }
             saveUserInfo(userInfo)
 

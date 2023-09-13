@@ -1,6 +1,8 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import ResultsReveal from '../views/ResultsReveal.vue'
+import AdminView from '../views/AdminView.vue'
+
+import header from '@/components/layout/header.vue'
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -12,7 +14,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/admin',
     name: 'admin',
-    component: () => import(/* webpackChunkName: "about" */ '../views/AdminView.vue')
+    component: AdminView
   },
   {
     path: '/resultsReveal',

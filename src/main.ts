@@ -9,8 +9,18 @@ import '@fortawesome/fontawesome-free/css/all.css';
 import Toast, { PluginOptions } from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import { store } from './store';
+import { loadUserInfoFromLocalStorage } from '@/store/localStorageFunctions'
+
 
 const app = createApp(App);
+
+
+const userInfoFromLocalStorage = loadUserInfoFromLocalStorage();
+
+// Initialize the store with user info from local storage (if available)
+if (userInfoFromLocalStorage) {
+  store.commit('user/SET_USER_INFO', userInfoFromLocalStorage);
+}
 
 app.use(router);
 app.use(store)

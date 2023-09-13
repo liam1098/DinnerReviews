@@ -5,14 +5,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, onMounted } from 'vue';
 import adminEdit from '@/components/adminEdit.vue';
 
 export default defineComponent({
-  name: 'AdminView',
-  components: {
-    adminEdit
-  }
+	name: 'AdminView',
+	components: {
+	adminEdit
+	},
+
+	setup() {
+		onMounted(() => {
+			console.log('Is it even reaching this at all?')
+		})
+	}
+  
+
 
 });
 </script>

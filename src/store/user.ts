@@ -12,11 +12,13 @@ const userModule: Module<UserState, RootState> = {
   state: {
     name: null,
     email: null,
+    isAdmin: false,
   },
   mutations: {
     SET_USER_INFO(state, userInfo) {
       state.name = userInfo.name;
       state.email = userInfo.email;
+      state.isAdmin = userInfo.isAdmin
     },
   },
 };

@@ -1,11 +1,9 @@
 <template>
-    <router-link class="routerLinks" to="/">Home</router-link>
-
-    <div class="firebaseTest">
+    <div class="admin-edit">
         <div class="widthModifier top-buttons">
             <button @click="toggleScheduleModal" class="btn btn-success">Schedule Next Dinner</button>
 
-           <div class="btn-group">
+        <div class="btn-group">
                 <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     {{ selectedOption }}
                 </button>
@@ -17,7 +15,7 @@
             </div>
         </div>
 
-        <h5 :style="{'margin-top':'20px'}">Upcoming schedule page or something maybe</h5>
+        <div> modify upcoming dinner schedule button and modal</div>
 
         <FlexibleModal :modalActive="modalActive" @close-modal="toggleModal" :buttonAction="modalButtonAction" :modalTitle="modalTitle"
             :deleteReviewID="deleteReviewID" :isDelete="isDelete"
@@ -100,6 +98,7 @@
         
         
     </div>
+    
 </template>
 
 
@@ -471,7 +470,7 @@ export default defineComponent ({
 
 <style>
 
-.firebaseTest {
+.admin-edit {
     max-width: 384px;
     margin: 0 auto;
     margin-top: 20px;
@@ -569,4 +568,6 @@ export default defineComponent ({
 .dateInput {
     max-width: 240px;
 }
+
+
 </style>

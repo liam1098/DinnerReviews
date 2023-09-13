@@ -1,23 +1,16 @@
 <template>
-	<div class="reviewPage">
-		<div class="signInDiv" :style="{'display': 'flex', 'justify-content': 'space-around', 'border': '1px solid black'}">
-			<button :style="{'max-height': '50px'}" v-if="!isAdmin" @click="googleSignIn"
-			class="btn btn-secondary mt-3 adminCheckField doesntWorkOnMobile">Sign-in
-			</button>
-			<div :style="{'max-width':'40%'}">ideally have this in the top right corner of the page when not sign in. Otherwise not visible.</div>
-		</div>
-		
-
+	<div class="reviewPage">		
 		<!-- Use the 'form-select' class to style the select dropdown with Bootstrap -->
 		<div>"Gee wouldn't wanna tap me in the face"</div>
 		<div class="spinning-image-container">
-			<img :src="require('@/assets/tinoFlick.png')" @click="playClickSound" class="image-resizing spinning-animation"
+			<img :src="require('@/assets/tinoFlick.png')" @click="playClickSound" class="image-resizing spin-in"
 				alt="Didnt load">
 		</div>
 
+
 		<audio ref="clickAudio" :src="require('@/assets/moaningSound.mp3')" preload="auto"></audio>
 
-		<div v-if="allowReviews" class="reviewSection">
+		<div v-if="allowReviews && signedInUser" class="reviewSection">
 			<div class="form-group">
 				<label for="userSelect" class="col-form-label labels">You are:</label>
 				<div class="input-container memberSelectionAndImage">
@@ -25,12 +18,13 @@
 						<option value="" disabled>Select a member</option>
 						<option v-for="member in nonHostMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
 					</select>
+					<div>{{ signedInUser }}</div>
 					<div v-if="selectedMember" class="image-container">
 						<img :src="require(`@/assets/${imgName}.jpeg`)" alt="Didnt load" class="miniImage">
 					</div>
 				</div>
 			</div>
-			<div v-if="selectedMember" class="form-group">
+			<div v-if="selectedMember && signedInUser" class="form-group">
 				<label for="revieweeSelect" class="col-form-label labels">Who hosted tonight?:</label>
 				<div class="input-container memberSelectionAndImage">
 					<select v-model="selectedReviewee" class="form-select inputs">
@@ -62,7 +56,7 @@
 					<div class="warning-message" v-if="!areRatingsSatisfactory">No bs will be allowed. numbers 1-10 only and no more than 2 DP's</div>
 				</div>
 			</div>
-			<button v-show="true" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
+			<button v-show="false" @click="tester" class="btn btn-secondary mt-3 adminCheckField"> Tester</button>
 			<!-- Use the 'btn btn-primary' classes for a Bootstrap-styled button -->
 			<button @click="submitReview" class="btn btn-primary mt-3" :disabled="!allowSubmit">Submit</button>
 			<audio ref="submitClick" :src="require('@/assets/notGoodSound.mp3')" preload="auto"></audio>
@@ -71,42 +65,21 @@
 		
 
 		<!-- <button @click="testerFunction" class="btn btn-secondary mt-3">tester button</button> -->
-
-
-		<div v-if="displayMsg">Hello: {{ helloPerson }}</div>
+		<!-- <button @click="testerFunction">Tester function</button> -->
 
 
 		
-		<div v-if="isAdmin">
-			<router-link to="/admin">
-				<button class="btn btn-success mt-3 adminCheckField">Go to admin page</button>
-			</router-link>
+		<div v-if="oneHostedDinner">
+			<h5 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">The details for the next upcoming dinner is:</h5>
+			<UpcomingScheduleCards :dinner="allHostedDinners[0]" />
 		</div>
-		<router-link to="/storePage">
-				<button class="btn btn-success mt-3 adminCheckField">Go to store page</button>
-		</router-link>
-
-		<!-- <button @click="testerFunction">Tester function</button> -->
-		<h4 class="constraints" :class="{ 'show': showH4 }" :style="{'color':'red'}" v-if="!allowReviews">Today isnt a dinner day</h4>
-		<h5 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">The details for the next upcoming dinner is:</h5>
-		<div v-for="dinners in allHostedDinners" :key="dinners.id">
-			<div class="upcomingDinnerCard">
-				<div class="info">
-					<span class="label">Host:</span>
-					<span class="data">{{ dinners.hostName }}</span>
-				</div>
-				<div class="info">
-					<span class="label">Date:</span>
-					<span class="data">{{ dinners.date.toLocaleDateString() }}</span>
-				</div>
-				<div class="info">
-					<span class="label">Week number:</span>
-					<span class="data">{{ dinners.weekNumber }}</span>
-				</div>
+		<div v-else>
+			<h5 class="constraints" :class="{ 'show': showH4 }" v-if="!allowReviews">The details for the next upcoming dinners are:</h5>
+			<div v-for="dinners in allHostedDinners" :key="dinners.id">
+					<UpcomingScheduleCards :dinner="dinners" />
 			</div>
-				
-
 		</div>
+		
 	</div>
 </template>
 
@@ -124,6 +97,8 @@ import { useToast, POSITION  } from "vue-toastification";
 
 import { useStore } from "vuex";
 
+import UpcomingScheduleCards from "./upcomingScheduleCards.vue";
+
 
 // Firebase ref
 const membersCollectionRef = collection(db, 'members')
@@ -137,7 +112,7 @@ const hostedDinnerRef = collection(db, 'hostedDinners')
 export default defineComponent ({
 	name: 'reviewPage',
 	components: {
-
+		UpcomingScheduleCards
 	},
 	setup() {
     const members = ref<Members[]>([])
@@ -170,13 +145,13 @@ export default defineComponent ({
 
 	// Temporary div with the persons name to test auth again
 	const helloPerson = ref<string>('')
-	const displayMsg = ref<boolean>(false)
 
 	// Toasts
 	let toast = useToast();
 
 	// Store
 	const store = useStore()
+	const signedInUser = ref('')
 
 
     // Play the click sound
@@ -228,7 +203,9 @@ export default defineComponent ({
         return query(hostedDinnerRef, where('date', '>=', Timestamp.fromDate(today)), where ('date', '<=', Timestamp.fromDate(tomorrow)),limit(1)); 
     });
     const allHostedDinnersRefQuery = computed(() => {
-        return query(hostedDinnerRef, orderBy("date")); 
+		const today = new Date(); // Get the current date
+        today.setHours(0, 0, 0, 0); // Set time to midnight for accurate comparison
+        return query(hostedDinnerRef, where('date', '>=', Timestamp.fromDate(today)), orderBy("date")); 
     });
 
 	const imgName = computed(() => {
@@ -330,11 +307,7 @@ export default defineComponent ({
 		} else return false
 	})
 
-	const isAdmin = computed<boolean>(() => {
-		// Some sort of simple password check here
-		// return adminList.value.some(admin => admin.name === selectedMember.value && admin.password === passwordInput.value);
-		return adminList.value.some(admin => admin.name === googleUser.value)
-	})
+	
 
 	// currently for testing toasts
 	const tester = (() => {
@@ -357,6 +330,10 @@ export default defineComponent ({
 		});
 	})
 
+	const oneHostedDinner = computed(() => {
+		return allHostedDinners.value.length == 1
+	})
+
 	
 	
 	const logTesting = (() => {
@@ -364,36 +341,6 @@ export default defineComponent ({
 		tempBool.value = true
 	})
 
-
-	const googleSignIn = async () => {
-		const provider = await new GoogleAuthProvider();
-		signInWithPopup(auth, provider)
-		.then((result) => {
-			const user = result.user
-			googleUser.value = user.displayName
-			console.log('user:', googleUser)
-			if (googleUser.value) {
-				helloPerson.value = googleUser.value
-				displayMsg.value = true
-				console.log('isAdmin value: ',isAdmin.value)
-				successToast('Sign in successful')
-			} else {
-				helloPerson.value = ''
-				displayMsg.value = false
-			}
-
-		}).catch((error) => {
-			// Handle Errors here.
-			const errorCode = error.code
-			const errorMessage = error.message;
-			console.error(errorCode)
-			console.error(errorMessage)
-		})
-	}
-
-	
-
-	// alternate to work on mobile devices
 
     onMounted(() => {
 		// Testing outsourcing hosted dinners API call to other files
@@ -453,7 +400,9 @@ export default defineComponent ({
 
         })
 
-		console.log('Printing out the details saved to the store here: ', store.state.user.name)
+		if (store.state.user.name) {
+			signedInUser.value = store.state.user.name
+		}
 
 		onSnapshot(adminCollectionRef, (querySnapshot) => {
             let localAdmin: Admin[] = []
@@ -490,8 +439,6 @@ export default defineComponent ({
 		dessertVal,
         ratingsSubmitted,
 		isTyler,
-		googleSignIn,
-		isAdmin,
 		logTesting,
 		tempBool,
 		passwordInput,
@@ -512,10 +459,9 @@ export default defineComponent ({
 		toast,
 		showH4,
 		helloPerson,
-		displayMsg,
-		allHostedDinners
-
-
+		allHostedDinners,
+		signedInUser,
+		oneHostedDinner
 	}
 	}
 
@@ -541,9 +487,10 @@ ul {
 .constraints {
 	max-width: 70%;
 	margin-top: 30px;
-	text-align: center;
 	opacity: 0;
 	transition: opacity 0.5s ease-in-out;
+	margin: 0px auto;
+	margin-top: 26px;
 }
 
 .show {
@@ -557,14 +504,16 @@ ul {
 	border-radius: 8px; /* Apply rounded corners to the image */
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
 }
+
+
 .spinning-image-container {
-	position: relative; /* Set the container to be positioned */
-	z-index: 2; /* Place the container above other elements */
-	animation: spin-in 1.5s ease-out forwards;
+  position: relative;
+  z-index: 2;
 }
 
-.spinning-animation {
-	animation: spin-in 1.5s ease-out forwards, wiggle 0.5s ease infinite;
+.spin-in {
+  /* Delay the spinning animation by 1 second */
+  animation: spin-in 1.5s ease-out forwards 1s;
 }
 
 .numberInputs {
